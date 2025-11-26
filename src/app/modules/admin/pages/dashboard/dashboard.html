@@ -1,0 +1,30 @@
+<h2>Panel de Administrador</h2>
+<p>Gestión de usuarios y roles</p>
+
+<table border="1" cellpadding="10" cellspacing="0">
+  <tr>
+    <th>Foto</th>
+    <th>Nombre</th>
+    <th>Correo</th>
+    <th>Rol</th>
+    <th>Acciones</th>
+  </tr>
+
+  <tr *ngFor="let user of users">
+    <td>
+      <img [src]="user.photo" width="50" style="border-radius: 50%" />
+    </td>
+    <td>{{ user.name }}</td>
+    <td>{{ user.email }}</td>
+    <td>
+      <strong>{{ user.role }}</strong>
+    </td>
+    <td>
+      <button (click)="changeRole(user.id, 'programador')">Programador</button>
+
+      <button (click)="changeRole(user.id, 'admin')">Admin</button>
+
+      <button (click)="changeRole(user.id, 'externo')">Externo</button>
+    </td>
+  </tr>
+</table>

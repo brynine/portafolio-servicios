@@ -1,0 +1,50 @@
+<!-- ===================== -->
+<!-- LOGIN CON GOOGLE       -->
+<!-- ===================== -->
+
+<button (click)="loginGoogle()">Iniciar sesión con Google</button>
+
+<div *ngIf="auth.currentUserData" style="margin-top: 20px">
+  <p><strong>Rol:</strong> {{ auth.getRole() }}</p>
+
+  <button *ngIf="auth.isAdmin()" routerLink="/admin">Ir al panel de Administrador</button>
+
+  <button *ngIf="auth.isProgramador()" routerLink="/programador">Ir a mi Portafolio</button>
+</div>
+
+<hr />
+
+<!-- ===================== -->
+<!-- SECCIÓN ASESORÍAS     -->
+<!-- ===================== -->
+
+<h2>Agendar Asesoría</h2>
+
+<p>Seleccione un programador disponible para asesoría</p>
+
+<select [(ngModel)]="programadorSeleccionado">
+  <option value="">-- Seleccione un programador --</option>
+
+  <option *ngFor="let p of programadores" [value]="p.uid">
+    {{ p.name }}
+  </option>
+</select>
+
+<br /><br />
+
+<label>Fecha y hora:</label><br />
+<input type="datetime-local" [(ngModel)]="fechaSeleccionada" />
+
+<br /><br />
+
+<label>Comentario (opcional)</label><br />
+<textarea
+  [(ngModel)]="comentario"
+  placeholder="Motivo de la asesoría..."
+  rows="4"
+  cols="40"
+></textarea>
+
+<br /><br />
+
+<button (click)="agendarAsesoria()">Agendar asesoría</button>

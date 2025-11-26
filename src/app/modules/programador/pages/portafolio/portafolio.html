@@ -1,0 +1,74 @@
+<h1 style="color: red">SI CARGA EL PORTAFOLIO</h1>
+
+<h2>Mi Portafolio</h2>
+<p>Gestión de mis proyectos académicos y laborales</p>
+
+<hr />
+
+<h3>Agregar nuevo proyecto</h3>
+
+<form (ngSubmit)="guardarProyecto()">
+  <label>Nombre del proyecto</label><br />
+  <input type="text" [(ngModel)]="nuevoProyecto.nombre" name="nombre" required />
+  <br /><br />
+
+  <label>Descripción</label><br />
+  <textarea [(ngModel)]="nuevoProyecto.descripcion" name="descripcion" required></textarea>
+  <br /><br />
+
+  <label>Tipo de proyecto</label><br />
+  <select [(ngModel)]="nuevoProyecto.tipo" name="tipo" required>
+    <option value="academico">Académico</option>
+    <option value="laboral">Laboral</option>
+  </select>
+  <br /><br />
+
+  <label>Tipo de participación</label><br />
+  <select [(ngModel)]="nuevoProyecto.participacion" name="participacion" required>
+    <option value="frontend">Frontend</option>
+    <option value="backend">Backend</option>
+    <option value="base-datos">Base de datos</option>
+  </select>
+  <br /><br />
+
+  <label>Tecnologías usadas</label><br />
+  <input
+    type="text"
+    [(ngModel)]="nuevoProyecto.tecnologias"
+    name="tecnologias"
+    placeholder="Angular, Firebase, MySQL"
+  />
+  <br /><br />
+
+  <label>Repositorio (GitHub)</label><br />
+  <input type="text" [(ngModel)]="nuevoProyecto.repositorio" name="repositorio" />
+  <br /><br />
+
+  <label>URL de despliegue</label><br />
+  <input type="text" [(ngModel)]="nuevoProyecto.deploy" name="deploy" />
+  <br /><br />
+
+  <button type="submit">Guardar Proyecto</button>
+</form>
+
+<hr />
+
+<h3>Proyectos Académicos</h3>
+
+<ul>
+  <li *ngFor="let p of proyectosAcademicos">
+    <strong>{{ p.nombre }}</strong> - {{ p.tecnologias }} <br />
+    {{ p.descripcion }}
+  </li>
+</ul>
+
+<hr />
+
+<h3>Proyectos Laborales</h3>
+
+<ul>
+  <li *ngFor="let p of proyectosLaborales">
+    <strong>{{ p.nombre }}</strong> - {{ p.tecnologias }} <br />
+    {{ p.descripcion }}
+  </li>
+</ul>

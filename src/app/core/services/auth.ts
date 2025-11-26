@@ -1,53 +1,166 @@
-import { Injectable, inject } from '@angular/core';
-import { Auth, GoogleAuthProvider, signInWithPopup, signOut, user } from '@angular/fire/auth';
-import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
-import { firstValueFrom } from 'rxjs';
+import { Injectable } from '@angular/core';
+
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  User,
+  Auth,
+} from 'firebase/auth';
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  Firestore,
+} from 'firebase/firestore';
+
+import { environment } from '../../../environments/environment';
+
+// Tipos de rol
+export type UserRole = 'admin' | 'programador' | 'externo';
+
+// Estructura del usuario en firestore
+export interface AppUser {
+  uid: string;
+  name: string | null;
+  email: string | null;
+  photo: string | null;
+  role: UserRole;
+}
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
 
-  private auth = inject(Auth);
-  private firestore = inject(Firestore);
+  private app: FirebaseApp;
+  private auth: Auth;
+  private db: Firestore;
 
-  user$ = user(this.auth);
+  // Usuario completo con rol
+  public currentUserData: AppUser | null = null;
 
-  async loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(this.auth, provider);
-    const firebaseUser = result.user;
+  constructor() {
 
-    // Guardar usuario en Firestore si no existe
-    await this.saveUserIfNotExists(firebaseUser.uid, {
-      uid: firebaseUser.uid,
-      name: firebaseUser.displayName,
-      email: firebaseUser.email,
-      photo: firebaseUser.photoURL,
-      role: "externo" // rol por defecto
+    // Inicializar Firebase
+    this.app = initializeApp(environment.firebase);
+
+    this.auth = getAuth(this.app);
+    this.db = getFirestore(this.app);
+
+    console.log('Firebase inicializado correctamente');
+
+    // Detectar cambios de sesión
+    onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        await this.loadUserData(user.uid);
+      } else {
+        this.currentUserData = null;
+      }
     });
-
-    return firebaseUser;
   }
 
-  async logout() {
-    return await signOut(this.auth);
-  }
+  // Login con google
+  async loginWithGoogle(): Promise<User | null> {
+    try {
+      const provider = new GoogleAuthProvider();
 
-  private async saveUserIfNotExists(uid: string, data: any) {
-    const ref = doc(this.firestore, `users/${uid}`);
-    const snap = await getDoc(ref);
+      const result = await signInWithPopup(this.auth, provider);
 
-    if (!snap.exists()) {
-      await setDoc(ref, data);
+      const user = result.user;
+
+      if (!user) {
+        throw new Error('No se obtuvo usuario de Google');
+      }
+
+      console.log('USUARIO AUTENTICADO:', user.uid);
+
+      // Guardar usuario si no existe
+      await this.saveUserIfNotExists(user);
+
+      // Cargar datos (incluye rol)
+      await this.loadUserData(user.uid);
+
+      return user;
+
+    } catch (error) {
+      console.error('ERROR EN LOGIN CON POPUP:', error);
+      return null;
     }
   }
 
-  async getCurrentUserData() {
-    const u = await firstValueFrom(this.user$);
-    if (!u) return null;
-    const ref = doc(this.firestore, `users/${u.uid}`);
-    const snap = await getDoc(ref);
-    return snap.exists() ? snap.data() : null;
+  // Guardar usuario si no existe
+  private async saveUserIfNotExists(user: User): Promise<void> {
+
+    const userRef = doc(this.db, 'users', user.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+
+      const data: AppUser = {
+        uid: user.uid,
+        name: user.displayName,
+        email: user.email,
+        photo: user.photoURL,
+        role: 'externo'
+      };
+
+      await setDoc(userRef, {
+        ...data,
+        createdAt: new Date(),
+      });
+
+      console.log('Usuario guardado en Firestore con rol externo');
+
+    } else {
+      console.log('El usuario ya existe en Firestore');
+    }
+  }
+
+  // Cargar datos del usuario
+  private async loadUserData(uid: string): Promise<void> {
+
+    const userRef = doc(this.db, 'users', uid);
+    const snap = await getDoc(userRef);
+
+    if (snap.exists()) {
+      this.currentUserData = snap.data() as AppUser;
+      console.log('Datos de usuario cargados:', this.currentUserData);
+    } else {
+      this.currentUserData = null;
+    }
+  }
+
+  // Obtener el rol
+  getRole(): UserRole | null {
+    return this.currentUserData?.role || null;
+  }
+
+  // Verificaciones
+  isAdmin(): boolean {
+    return this.currentUserData?.role === 'admin';
+  }
+
+  isProgramador(): boolean {
+    return this.currentUserData?.role === 'programador';
+  }
+
+  // Usuario de firebase
+  getCurrentUser(): User | null {
+    return this.auth.currentUser;
+  }
+
+  onAuthChange(callback: (user: User | null) => void) {
+    return onAuthStateChanged(this.auth, callback);
+  }
+
+  async logout(): Promise<void> {
+    this.currentUserData = null;
+    await signOut(this.auth);
   }
 }

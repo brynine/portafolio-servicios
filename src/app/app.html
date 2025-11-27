@@ -1,1 +1,10 @@
+<div
+  *ngIf="!isHome()"
+  style="padding: 10px; background: #f3f3f3; display: flex; gap: 10px; justify-content: center"
+>
+  <button routerLink="/">Inicio</button>
+
+  <button (click)="irAtras()">Regresar</button>
+</div>
+
 <router-outlet></router-outlet>

@@ -1,50 +1,23 @@
-<!-- ===================== -->
-<!-- LOGIN CON GOOGLE       -->
-<!-- ===================== -->
+<section class="hero">
+  <h1>Portafolio de Programadores</h1>
 
-<button (click)="loginGoogle()">Iniciar sesión con Google</button>
+  <p class="hero-subtitle">
+    Encuentra talento, revisa proyectos y agenda asesorías personalizadas.
+  </p>
 
-<div *ngIf="auth.currentUserData" style="margin-top: 20px">
-  <p><strong>Rol:</strong> {{ auth.getRole() }}</p>
+  <!-- SI NO ESTÁ LOGUEADO -->
+  <button *ngIf="!auth.currentUserData" class="btn-principal" (click)="loginGoogle()">
+    Iniciar sesión con Google
+  </button>
 
-  <button *ngIf="auth.isAdmin()" routerLink="/admin">Ir al panel de Administrador</button>
+  <!-- SI YA ESTÁ LOGUEADO -->
+  <div *ngIf="auth.currentUserData" class="user-actions">
+    <p class="welcome">
+      Sesión iniciada como: <strong>{{ auth.currentUserData.email }}</strong>
+    </p>
 
-  <button *ngIf="auth.isProgramador()" routerLink="/programador">Ir a mi Portafolio</button>
-</div>
+    <button class="btn-secondary" (click)="entrar()">Entrar →</button>
 
-<hr />
-
-<!-- ===================== -->
-<!-- SECCIÓN ASESORÍAS     -->
-<!-- ===================== -->
-
-<h2>Agendar Asesoría</h2>
-
-<p>Seleccione un programador disponible para asesoría</p>
-
-<select [(ngModel)]="programadorSeleccionado">
-  <option value="">-- Seleccione un programador --</option>
-
-  <option *ngFor="let p of programadores" [value]="p.uid">
-    {{ p.name }}
-  </option>
-</select>
-
-<br /><br />
-
-<label>Fecha y hora:</label><br />
-<input type="datetime-local" [(ngModel)]="fechaSeleccionada" />
-
-<br /><br />
-
-<label>Comentario (opcional)</label><br />
-<textarea
-  [(ngModel)]="comentario"
-  placeholder="Motivo de la asesoría..."
-  rows="4"
-  cols="40"
-></textarea>
-
-<br /><br />
-
-<button (click)="agendarAsesoria()">Agendar asesoría</button>
+    <button class="btn-outline" (click)="logout()">Cambiar de cuenta</button>
+  </div>
+</section>

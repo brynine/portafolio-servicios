@@ -1,0 +1,197 @@
+:root {
+  --fondo: #ffffff;
+  --texto: #333333;
+  --azul: #3f51b5;
+  --naranja: #ff9800;
+  --borde: #cccccc;
+}
+
+section {
+  padding: 40px 20px;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+h1, h2 {
+  color: var(--azul);
+  text-align: center;
+}
+
+/* HERO */
+
+/* CONTENEDOR DE TODA LA PÁGINA */
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+/* HERO COMO TARJETA CENTRAL */
+.hero {
+  background: linear-gradient(135deg, #3F51B5, #303F9F);
+  color: white;
+  padding: 80px 40px;
+  text-align: center;
+  border-radius: 40px;
+  max-width: 900px;
+  width: 90%;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.btn-principal {
+  background: #FF9800;
+  color: white;
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.btn-principal:hover {
+  background: #e88900;
+  transform: translateY(-3px);
+}
+
+.rol-info {
+  margin-top: 25px;
+  padding: 15px;
+  background: white;
+  color: #333;
+  display: inline-block;
+  border-radius: 12px;
+  border: 1px solid #cccccc;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.rol-info p {
+  margin-bottom: 10px;
+}
+
+.rol-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-outline {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 2px solid #3F51B5;
+  background: transparent;
+  color: #3F51B5;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: #3F51B5;
+  color: white;
+}
+
+button {
+  padding: 10px 22px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.btn-primary {
+  background: var(--azul);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--naranja);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--azul);
+  color: var(--azul);
+}
+
+.steps-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.step-card {
+  border: 1px solid var(--borde);
+  padding: 20px;
+  width: 150px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.step-card span {
+  display: block;
+  font-size: 28px;
+  color: var(--azul);
+}
+
+/* CARDS PROGRAMADORES */
+.cards-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.card {
+  min-width: 220px;
+  border: 1px solid var(--borde);
+  padding: 15px;
+  text-align: center;
+  border-radius: 12px;
+  background: white;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+/* ASESORÍA */
+.asesoria-card {
+  max-width: 400px;
+  margin: auto;
+  border: 1px solid var(--borde);
+  padding: 25px;
+  border-radius: 10px;
+  background: white;
+}
+
+.asesoria-card input,
+.asesoria-card textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0 15px;
+  border: 1px solid var(--borde);
+  border-radius: 5px;
+}
+
+.user-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.welcome {
+  width: 100%;
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 10px;
+  text-align: center;
+}
+

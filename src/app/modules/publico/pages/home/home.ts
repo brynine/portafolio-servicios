@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -22,16 +22,13 @@ import { environment } from '../../../../../environments/environment';
   styleUrl: './home.scss',
   imports: [
     CommonModule,
-    RouterLink,
     FormsModule
   ]
 })
 export class HomeComponent implements OnInit {
 
-  // Firebase
   db = getFirestore(initializeApp(environment.firebase));
 
-  // Asesorías
   programadores: any[] = [];
   programadorSeleccionado = '';
   fechaSeleccionada = '';
@@ -46,7 +43,6 @@ export class HomeComponent implements OnInit {
     await this.cargarProgramadores();
   }
 
-  // Login
   async loginGoogle() {
 
     try {
@@ -66,7 +62,6 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  // Programadores
   async cargarProgramadores() {
     const ref = collection(this.db, 'users');
     const snap = await getDocs(ref);
@@ -78,7 +73,6 @@ export class HomeComponent implements OnInit {
     console.log('Programadores encontrados:', this.programadores);
   }
 
-  // Asesorias
   async agendarAsesoria() {
 
     if (!this.programadorSeleccionado || !this.fechaSeleccionada) {
@@ -104,10 +98,27 @@ export class HomeComponent implements OnInit {
 
     alert('Asesoría enviada correctamente');
 
-    // Limpiar formulario
     this.comentario = '';
     this.fechaSeleccionada = '';
     this.programadorSeleccionado = '';
   }
+
+  entrar() {
+  const role = this.auth.getRole();
+
+  if (role === 'admin') {
+    this.router.navigate(['/admin']);
+  } else if (role === 'programador') {
+    this.router.navigate(['/programador']);
+  } else {
+    this.router.navigate(['/explorar']);
+  }
+}
+
+
+  async logout() {
+  await this.auth.logout();
+}
+
 
 }

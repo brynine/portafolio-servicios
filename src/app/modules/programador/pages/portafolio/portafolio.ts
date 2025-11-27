@@ -3,13 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { initializeApp } from 'firebase/app';
+
 import {
   getFirestore,
   collection,
   addDoc,
   query,
   where,
-  getDocs
+  getDocs,
+  updateDoc,
+  doc
 } from 'firebase/firestore';
 
 import { environment } from '../../../../../environments/environment';
@@ -28,6 +31,8 @@ export class Portafolio implements OnInit {
 
   proyectosAcademicos: any[] = [];
   proyectosLaborales: any[] = [];
+  asesorias: any[] = [];
+
 
   nuevoProyecto = {
     nombre: '',
@@ -42,7 +47,9 @@ export class Portafolio implements OnInit {
   constructor(private auth: AuthService) {}
 
   async ngOnInit() {
+    console.log('Entre al portafolio');
     await this.cargarProyectos();
+    await this.cargarAsesorias();
   }
 
   async guardarProyecto() {
@@ -91,6 +98,39 @@ export class Portafolio implements OnInit {
     this.proyectosAcademicos = datos.filter(p => p['tipo'] === 'academico');
     this.proyectosLaborales = datos.filter(p => p['tipo'] === 'laboral');
 
-
   }
+
+  async cargarAsesorias() {
+
+  if (!this.auth.currentUserData) return;
+
+  const q = query(
+    collection(this.db, 'asesorias'),
+    where('programador', '==', this.auth.currentUserData.uid)
+  );
+
+  const snapshot = await getDocs(q);
+
+  this.asesorias = snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  }));
+
+  console.log('Asesorías recibidas:', this.asesorias);
+}
+
+async responder(id: string, estado: string) {
+
+  const ref = doc(this.db, 'asesorias', id);
+
+  await updateDoc(ref, {
+    estado: estado
+  });
+
+  alert(`Asesoría ${estado}`);
+
+  await this.cargarAsesorias();
+}
+
+
 }

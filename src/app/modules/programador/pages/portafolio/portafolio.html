@@ -72,3 +72,25 @@
     {{ p.descripcion }}
   </li>
 </ul>
+
+<hr />
+
+<h2>Solicitudes de Asesoría</h2>
+
+<div *ngIf="asesorias.length === 0">
+  <p>No tienes solicitudes aún</p>
+</div>
+
+<div
+  *ngFor="let a of asesorias"
+  class="asesoria-card"
+  style="border: 1px solid #ccc; padding: 15px; margin-bottom: 10px"
+>
+  <p><b>Fecha:</b> {{ a.fecha }}</p>
+  <p><b>Comentario:</b> {{ a.comentario || 'Sin comentario' }}</p>
+  <p><b>Estado:</b> {{ a.estado }}</p>
+
+  <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'aprobado')">Aprobar</button>
+
+  <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'rechazado')">Rechazar</button>
+</div>

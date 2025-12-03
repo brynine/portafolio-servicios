@@ -1,96 +1,230 @@
-<h1 style="color: red">SI CARGA EL PORTAFOLIO</h1>
+<h2 class="titulo">Panel del Programador</h2>
 
-<h2>Mi Portafolio</h2>
-<p>Gestión de mis proyectos académicos y laborales</p>
+<div class="menu-interno">
+  <button (click)="vista = 'agregar'" [class.activo]="vista === 'agregar'">
+    ➕ Agregar Proyecto
+  </button>
 
-<hr />
+  <button (click)="vista = 'proyectos'" [class.activo]="vista === 'proyectos'">
+    📁 Mis Proyectos
+  </button>
 
-<h3>Agregar nuevo proyecto</h3>
+  <button (click)="vista = 'asesorias'" [class.activo]="vista === 'asesorias'">
+    📬 Mis Asesorías
+  </button>
 
-<form (ngSubmit)="guardarProyecto()">
-  <label>Nombre del proyecto</label><br />
-  <input type="text" [(ngModel)]="nuevoProyecto.nombre" name="nombre" required />
-  <br /><br />
-
-  <label>Descripción</label><br />
-  <textarea [(ngModel)]="nuevoProyecto.descripcion" name="descripcion" required></textarea>
-  <br /><br />
-
-  <label>Tipo de proyecto</label><br />
-  <select [(ngModel)]="nuevoProyecto.tipo" name="tipo" required>
-    <option value="academico">Académico</option>
-    <option value="laboral">Laboral</option>
-  </select>
-  <br /><br />
-
-  <label>Tipo de participación</label><br />
-  <select [(ngModel)]="nuevoProyecto.participacion" name="participacion" required>
-    <option value="frontend">Frontend</option>
-    <option value="backend">Backend</option>
-    <option value="base-datos">Base de datos</option>
-  </select>
-  <br /><br />
-
-  <label>Tecnologías usadas</label><br />
-  <input
-    type="text"
-    [(ngModel)]="nuevoProyecto.tecnologias"
-    name="tecnologias"
-    placeholder="Angular, Firebase, MySQL"
-  />
-  <br /><br />
-
-  <label>Repositorio (GitHub)</label><br />
-  <input type="text" [(ngModel)]="nuevoProyecto.repositorio" name="repositorio" />
-  <br /><br />
-
-  <label>URL de despliegue</label><br />
-  <input type="text" [(ngModel)]="nuevoProyecto.deploy" name="deploy" />
-  <br /><br />
-
-  <button type="submit">Guardar Proyecto</button>
-</form>
-
-<hr />
-
-<h3>Proyectos Académicos</h3>
-
-<ul>
-  <li *ngFor="let p of proyectosAcademicos">
-    <strong>{{ p.nombre }}</strong> - {{ p.tecnologias }} <br />
-    {{ p.descripcion }}
-  </li>
-</ul>
-
-<hr />
-
-<h3>Proyectos Laborales</h3>
-
-<ul>
-  <li *ngFor="let p of proyectosLaborales">
-    <strong>{{ p.nombre }}</strong> - {{ p.tecnologias }} <br />
-    {{ p.descripcion }}
-  </li>
-</ul>
-
-<hr />
-
-<h2>Solicitudes de Asesoría</h2>
-
-<div *ngIf="asesorias.length === 0">
-  <p>No tienes solicitudes aún</p>
+  <button (click)="vista = 'perfil'">Mi Perfil</button>
 </div>
 
-<div
-  *ngFor="let a of asesorias"
-  class="asesoria-card"
-  style="border: 1px solid #ccc; padding: 15px; margin-bottom: 10px"
->
-  <p><b>Fecha:</b> {{ a.fecha }}</p>
-  <p><b>Comentario:</b> {{ a.comentario || 'Sin comentario' }}</p>
-  <p><b>Estado:</b> {{ a.estado }}</p>
+<div *ngIf="vista === 'agregar'" class="seccion">
+  <h3>Agregar nuevo proyecto</h3>
 
-  <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'aprobado')">Aprobar</button>
+  <form (ngSubmit)="guardarProyecto()" class="formulario">
+    <div class="campo">
+      <label>Nombre del proyecto</label>
+      <input type="text" [(ngModel)]="nuevoProyecto.nombre" name="nombre" required />
+    </div>
 
-  <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'rechazado')">Rechazar</button>
+    <div class="campo">
+      <label>Descripción</label>
+      <textarea [(ngModel)]="nuevoProyecto.descripcion" name="descripcion" required></textarea>
+    </div>
+
+    <div class="doble">
+      <div>
+        <label>Tipo de proyecto</label>
+        <select [(ngModel)]="nuevoProyecto.tipo" name="tipo" required>
+          <option value="academico">Académico</option>
+          <option value="laboral">Laboral</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Rol</label>
+        <select [(ngModel)]="nuevoProyecto.participacion" name="participacion" required>
+          <option value="frontend">Frontend</option>
+          <option value="backend">Backend</option>
+          <option value="base-datos">Base de datos</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label>Tecnologías usadas</label>
+      <input
+        type="text"
+        [(ngModel)]="nuevoProyecto.tecnologias"
+        placeholder="Angular, Firebase, MySQL"
+        name="tecnologias"
+      />
+    </div>
+
+    <div class="campo">
+      <label>Repositorio (GitHub)</label>
+      <input type="text" [(ngModel)]="nuevoProyecto.repositorio" name="repositorio" />
+    </div>
+
+    <div class="campo">
+      <label>URL de despliegue</label>
+      <input type="text" [(ngModel)]="nuevoProyecto.deploy" name="deploy" />
+    </div>
+
+    <button type="submit" class="btn-guardar">Guardar proyecto</button>
+  </form>
+</div>
+
+<div *ngIf="vista === 'proyectos'" class="seccion">
+  <input
+    class="buscador"
+    type="text"
+    placeholder="Buscar proyecto..."
+    [(ngModel)]="filtroProyecto"
+    (input)="filtrarProyectos()"
+  />
+
+  <div class="tarjeta" *ngFor="let p of proyectosFiltrados">
+    <h3>{{ p.nombre }}</h3>
+    <p><strong>Tecnologías:</strong> {{ p.tecnologias }}</p>
+    <p>{{ p.descripcion }}</p>
+
+    <div class="acciones">
+      <button (click)="editarProyecto(p)">Editar</button>
+      <button (click)="eliminarProyecto(p.id)">Eliminar</button>
+    </div>
+  </div>
+
+  <h3>Mis Proyectos</h3>
+
+  <h4>Académicos</h4>
+  <div *ngIf="proyectosAcademicos.length === 0">Sin proyectos académicos</div>
+
+  <div class="tarjeta" *ngFor="let p of proyectosAcademicos">
+    <h3>{{ p.nombre }}</h3>
+    <p><strong>Tecnologías:</strong> {{ p.tecnologias }}</p>
+    <p>{{ p.descripcion }}</p>
+  </div>
+
+  <h4>Laborales</h4>
+  <div *ngIf="proyectosLaborales.length === 0">Sin proyectos laborales</div>
+
+  <div class="tarjeta" *ngFor="let p of proyectosLaborales">
+    <h3>{{ p.nombre }}</h3>
+    <p><strong>Tecnologías:</strong> {{ p.tecnologias }}</p>
+    <p>{{ p.descripcion }}</p>
+  </div>
+</div>
+
+<div *ngIf="vista === 'asesorias'" class="seccion">
+  <h3>Solicitudes de Asesoría</h3>
+
+  <div *ngIf="asesorias.length === 0">No tienes solicitudes aún</div>
+
+  <div class="tarjeta" *ngFor="let a of asesorias">
+    <p><strong>Fecha:</strong> {{ a.fecha }}</p>
+    <p><strong>Usuario:</strong> {{ a.nombre }}</p>
+    <p><strong>Correo:</strong> {{ a.correo }}</p>
+    <p><strong>Mensaje:</strong> {{ a.mensaje }}</p>
+
+    <p>
+      <strong>Estado:</strong>
+      <span [class]="a.estado">{{ a.estado }}</span>
+    </p>
+
+    <div class="acciones">
+      <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'aprobado')">
+        Aprobar
+      </button>
+      <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'rechazado')">
+        Rechazar
+      </button>
+      <button *ngIf="a.estado === 'aprobado'" (click)="responder(a.id, 'realizado')">
+        Marcar como realizado
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="vista === 'editar'" class="seccion">
+  <h3>Editar proyecto</h3>
+
+  <form (ngSubmit)="actualizarProyecto()" class="formulario">
+    <label>Nombre del proyecto</label>
+    <input type="text" [(ngModel)]="proyectoEditando.nombre" name="editarNombre" required />
+
+    <label>Descripción</label>
+    <textarea
+      [(ngModel)]="proyectoEditando.descripcion"
+      name="editarDescripcion"
+      required
+    ></textarea>
+
+    <label>Tipo de proyecto</label>
+    <select [(ngModel)]="proyectoEditando.tipo" name="editarTipo" required>
+      <option value="academico">Académico</option>
+      <option value="laboral">Laboral</option>
+    </select>
+
+    <label>Rol en el proyecto</label>
+    <select [(ngModel)]="proyectoEditando.participacion" name="editarParticipacion" required>
+      <option value="frontend">Frontend</option>
+      <option value="backend">Backend</option>
+      <option value="base-datos">Base de datos</option>
+    </select>
+
+    <label>Tecnologías usadas</label>
+    <input type="text" [(ngModel)]="proyectoEditando.tecnologias" name="editarTecnologias" />
+
+    <label>Repositorio (GitHub)</label>
+    <input type="text" [(ngModel)]="proyectoEditando.repositorio" name="editarRepositorio" />
+
+    <label>URL de despliegue</label>
+    <input type="text" [(ngModel)]="proyectoEditando.deploy" name="editarDeploy" />
+
+    <div class="acciones">
+      <button type="submit" class="btn-guardar">Actualizar proyecto</button>
+      <button type="button" (click)="cancelarEdicion()">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<div *ngIf="vista === 'perfil'" class="perfil-container">
+  <h2>Mi Perfil</h2>
+
+  <div class="foto-container">
+    <img [src]="perfil.photo || 'assets/img/default-user.png'" class="foto-perfil" />
+    <label class="btn-foto">
+      Cambiar foto
+      <input type="file" accept="image/*" (change)="subirFoto($event)" />
+    </label>
+  </div>
+
+  <form (ngSubmit)="guardarPerfil()" class="formulario">
+    <label>Nombre</label>
+    <input type="text" [(ngModel)]="perfil.name" name="nombre" required />
+
+    <label>Especialidad</label>
+    <input
+      type="text"
+      [(ngModel)]="perfil.specialty"
+      name="specialty"
+      placeholder="Ej: Angular, Backend, IA"
+    />
+
+    <label>Descripción</label>
+    <textarea [(ngModel)]="perfil.description" name="description" rows="4"></textarea>
+
+    <label>GitHub</label>
+    <input type="text" [(ngModel)]="perfil.github" name="github" />
+
+    <label>LinkedIn</label>
+    <input type="text" [(ngModel)]="perfil.linkedin" name="linkedin" />
+
+    <label>Instagram</label>
+    <input type="text" [(ngModel)]="perfil.instagram" name="instagram" />
+
+    <label>Sitio Web</label>
+    <input type="text" [(ngModel)]="perfil.website" name="website" />
+
+    <button type="submit" class="btn-guardar">Guardar cambios</button>
+  </form>
 </div>

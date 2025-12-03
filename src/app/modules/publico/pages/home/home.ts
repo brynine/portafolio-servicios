@@ -20,10 +20,7 @@ import { environment } from '../../../../../environments/environment';
   standalone: true,
   templateUrl: './home.html',
   styleUrl: './home.scss',
-  imports: [
-    CommonModule,
-    FormsModule
-  ]
+  imports: [CommonModule, FormsModule]
 })
 export class HomeComponent implements OnInit {
 
@@ -44,23 +41,13 @@ export class HomeComponent implements OnInit {
   }
 
   async loginGoogle() {
-
-    try {
-      const user = await this.auth.loginWithGoogle();
-
-      if (!user) {
-        console.warn('No se obtuvo usuario');
-        return;
-      }
-
-      console.log('Usuario logeado:', user.email);
-
-      this.router.navigateByUrl('/');
-
-    } catch (error) {
-      console.error('Error en login:', error);
-    }
+  try {
+    await this.auth.loginWithGoogle();
+  } catch (error) {
+    console.error('Error en login:', error);
   }
+}
+
 
   async cargarProgramadores() {
     const ref = collection(this.db, 'users');
@@ -69,12 +56,9 @@ export class HomeComponent implements OnInit {
     this.programadores = snap.docs
       .map(d => d.data())
       .filter((u: any) => u.role === 'programador');
-
-    console.log('Programadores encontrados:', this.programadores);
   }
 
   async agendarAsesoria() {
-
     if (!this.programadorSeleccionado || !this.fechaSeleccionada) {
       alert('Debes seleccionar programador y fecha');
       return;
@@ -104,21 +88,22 @@ export class HomeComponent implements OnInit {
   }
 
   entrar() {
-  const role = this.auth.getRole();
+    const role = this.auth.getRole();
 
-  if (role === 'admin') {
-    this.router.navigate(['/admin']);
-  } else if (role === 'programador') {
-    this.router.navigate(['/programador']);
-  } else {
-    this.router.navigate(['/explorar']);
+    if (role === 'admin') {
+      this.router.navigate(['/admin']);
+    } else if (role === 'programador') {
+      this.router.navigate(['/programador']);
+    } else {
+      this.router.navigate(['/explorar']);
+    }
   }
-}
-
 
   async logout() {
-  await this.auth.logout();
-}
+    await this.auth.logout();
+  }
 
-
+  agendarAsesoriaHome() {
+    this.router.navigate(['/explorar']);
+  }
 }

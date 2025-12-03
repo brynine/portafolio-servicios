@@ -1,23 +1,24 @@
-<section class="hero">
-  <h1>Portafolio de Programadores</h1>
+<div class="home-wrapper">
+  <div class="left-panel">
+    <div *ngIf="!auth.currentUserData" class="login-box">
+      <h1 class="title">Portafolio de Programadores</h1>
+      <p class="subtitle">Encuentra talento, revisa proyectos y agenda asesorías personalizadas.</p>
 
-  <p class="hero-subtitle">
-    Encuentra talento, revisa proyectos y agenda asesorías personalizadas.
-  </p>
+      <button class="google-btn" (click)="loginGoogle()">
+        <img src="assets/google-icon.svg" alt="Google" />
+        Iniciar sesión con Google
+      </button>
 
-  <!-- SI NO ESTÁ LOGUEADO -->
-  <button *ngIf="!auth.currentUserData" class="btn-principal" (click)="loginGoogle()">
-    Iniciar sesión con Google
-  </button>
+      <button class="btn-primary" (click)="agendarAsesoriaHome()">Agendar asesoría</button>
+    </div>
 
-  <!-- SI YA ESTÁ LOGUEADO -->
-  <div *ngIf="auth.currentUserData" class="user-actions">
-    <p class="welcome">
-      Sesión iniciada como: <strong>{{ auth.currentUserData.email }}</strong>
-    </p>
-
-    <button class="btn-secondary" (click)="entrar()">Entrar →</button>
-
-    <button class="btn-outline" (click)="logout()">Cambiar de cuenta</button>
+    <div *ngIf="auth.currentUserData" class="logged-box"></div>
   </div>
-</section>
+
+  <div class="right-panel">
+    <div class="decor-card">
+      <h2>Desarrollo | Innovación | Tecnología</h2>
+      <p>Conecta con los mejores programadores y construye tus ideas con asesoría profesional.</p>
+    </div>
+  </div>
+</div>

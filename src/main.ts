@@ -1,16 +1,20 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+
 import { App } from './app/app';
-import { appConfig } from './app/app.config';
+import { routes } from './app/app.routes';
+import { environment } from './environments/environment';
 
-bootstrapApplication(App, appConfig)
-  .catch((err) => console.error(err));
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideAuth, getAuth } from '@angular/fire/auth';
 
-  window.addEventListener('error', (event) => {
-  if (
-    event.message.includes('Cross-Origin-Opener-Policy') ||
-    event.message.includes('window.close')
-  ) {
-    event.preventDefault();
-  }
-});
+bootstrapApplication(App, {
+  providers: [
+    provideRouter(routes),
 
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideAuth(() => getAuth()),
+    provideFirestore(() => getFirestore()),
+  ]
+}).catch(err => console.error(err));

@@ -1,30 +1,150 @@
-<h2>Panel de Administrador</h2>
-<p>Gestión de usuarios y roles</p>
+<div class="admin-banner">
+  <div class="banner-content">
+    <h1>PANEL DE ADMINISTRACIÓN</h1>
+    <p>GESTIÓN DE PROGRAMADORES Y DISPONIBILIDAD</p>
+  </div>
+</div>
 
-<table border="1" cellpadding="10" cellspacing="0">
-  <tr>
-    <th>Foto</th>
-    <th>Nombre</th>
-    <th>Correo</th>
-    <th>Rol</th>
-    <th>Acciones</th>
-  </tr>
+<div class="admin-canvas">
+  <div class="admin-card">
+    <div class="menu-admin">
+      <button (click)="vista = 'crear'" [class.activo]="vista === 'crear'">
+        ➕ Crear Programador
+      </button>
+      <button (click)="vista = 'lista'" [class.activo]="vista === 'lista'">📋 Programadores</button>
+      <button (click)="vista = 'horarios'" [class.activo]="vista === 'horarios'">
+        🕒 Horarios
+      </button>
+    </div>
 
-  <tr *ngFor="let user of users">
-    <td>
-      <img [src]="user.photo" width="50" style="border-radius: 50%" />
-    </td>
-    <td>{{ user.name }}</td>
-    <td>{{ user.email }}</td>
-    <td>
-      <strong>{{ user.role }}</strong>
-    </td>
-    <td>
-      <button (click)="changeRole(user.id, 'programador')">Programador</button>
+    <div *ngIf="vista === 'crear'" class="seccion">
+      <h2>Registrar Nuevo Programador</h2>
 
-      <button (click)="changeRole(user.id, 'admin')">Admin</button>
+      <form (ngSubmit)="crearProgramador()">
+        <label>Nombre completo</label>
+        <input type="text" [(ngModel)]="nuevoProgramador.name" name="name" required />
 
-      <button (click)="changeRole(user.id, 'externo')">Externo</button>
-    </td>
-  </tr>
-</table>
+        <label>Correo</label>
+        <input type="email" [(ngModel)]="nuevoProgramador.email" name="email" required />
+
+        <label>Especialidad</label>
+        <input type="text" [(ngModel)]="nuevoProgramador.specialty" name="specialty" required />
+
+        <button class="btn-primary" type="submit">Crear Programador</button>
+      </form>
+    </div>
+
+    <div *ngIf="vista === 'lista'" class="seccion">
+      <h2>Programadores Registrados</h2>
+
+      <div *ngFor="let p of programadores" class="tarjeta">
+        <h3>{{ p.name }}</h3>
+        <p><strong>Email:</strong> {{ p.email }}</p>
+        <p><strong>Especialidad:</strong> {{ p.specialty }}</p>
+
+        <div class="acciones">
+          <button class="btn-editar" (click)="editarProgramador(p)">Editar</button>
+          <button class="btn-eliminar" (click)="eliminarProgramador(p.uid)">Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="vista === 'editar'" class="seccion">
+      <h2>Editar Programador</h2>
+
+      <form (ngSubmit)="actualizarProgramador()">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="programadorEditando.name" name="editName" required />
+
+        <label>Correo</label>
+        <input type="email" [(ngModel)]="programadorEditando.email" name="editEmail" required />
+
+        <label>Especialidad</label>
+        <input
+          type="text"
+          [(ngModel)]="programadorEditando.specialty"
+          name="editSpecialty"
+          required
+        />
+
+        <button class="btn-primary" type="submit">Guardar Cambios</button>
+        <button class="btn-secundario" type="button" (click)="vista = 'lista'">Cancelar</button>
+      </form>
+    </div>
+
+    <div *ngIf="vista === 'horarios'" class="seccion">
+      <h2>Horarios de Disponibilidad</h2>
+
+      <label>Seleccionar Programador</label>
+      <select [(ngModel)]="programadorSeleccionado" (change)="cambiarProgramador()" class="select">
+        <option [ngValue]="null">-- Seleccionar programador --</option>
+        <option *ngFor="let p of programadores" [ngValue]="p">
+          {{ p.name }}
+        </option>
+      </select>
+
+      <div *ngIf="programadorSeleccionado" class="horarios">
+        <h3>Horario de {{ programadorSeleccionado.name }}</h3>
+
+        <label>Día</label>
+        <select [(ngModel)]="nuevoHorario.dia" name="dia">
+          <option>Lunes</option>
+          <option>Martes</option>
+          <option>Miércoles</option>
+          <option>Jueves</option>
+          <option>Viernes</option>
+          <option>Sábado</option>
+        </select>
+
+        <div class="grid-2 horarios-grid">
+          <div class="horario-item">
+            <label>Hora Inicio</label>
+            <input type="time" [(ngModel)]="nuevoHorario.horaInicio" name="inicio" />
+          </div>
+
+          <div class="horario-item">
+            <label>Hora Fin</label>
+            <input type="time" [(ngModel)]="nuevoHorario.horaFin" name="fin" />
+          </div>
+        </div>
+
+        <button class="btn-primary" (click)="guardarHorario()">Agregar horario</button>
+
+        <h3>Horarios Registrados</h3>
+        <ul class="lista-horarios">
+          <li *ngFor="let h of horariosProgramador">
+            {{ h.dia }} — {{ h.horaInicio }} a {{ h.horaFin }}
+
+            <div class="acciones">
+              <button class="btn-editar" (click)="editarHorario(h)">Editar</button>
+              <button class="btn-eliminar" (click)="eliminarHorario(h.id)">Eliminar</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div *ngIf="modoEditarHorario" class="editar-container">
+      <h3>Editando Horario</h3>
+
+      <label>Día</label>
+      <select [(ngModel)]="horarioEditando.dia">
+        <option>Lunes</option>
+        <option>Martes</option>
+        <option>Miércoles</option>
+        <option>Jueves</option>
+        <option>Viernes</option>
+        <option>Sábado</option>
+      </select>
+
+      <label>Hora Inicio</label>
+      <input type="time" [(ngModel)]="horarioEditando.horaInicio" />
+
+      <label>Hora Fin</label>
+      <input type="time" [(ngModel)]="horarioEditando.horaFin" />
+
+      <button class="btn-primary" (click)="actualizarHorario()">Guardar</button>
+      <button class="btn-secundario" (click)="cancelarEdicionHorario()">Cancelar</button>
+    </div>
+  </div>
+</div>

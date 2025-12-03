@@ -1,0 +1,146 @@
+.titulo {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.menu-interno {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.menu-interno button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.menu-interno button:hover {
+  background: #d1d5db;
+}
+
+.menu-interno .activo {
+  background: #6366f1;
+  color: white;
+}
+
+.seccion {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formulario input,
+.formulario textarea,
+.formulario select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.btn-guardar {
+  margin-top: 10px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-guardar:hover {
+  background: #4f46e5;
+}
+
+.tarjeta {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.aprobado {
+  color: #10b981;
+}
+
+.rechazado {
+  color: #ef4444;
+}
+
+.realizado {
+  color: #3b82f6;
+}
+
+.acciones button {
+  margin-right: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.buscador {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.acciones button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  background: #6366f1;
+  color: white;
+}
+
+.acciones button:last-child {
+  background: #ef4444;
+}
+
+.perfil-container {
+  max-width: 700px;
+  margin: auto;
+}
+
+.foto-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.foto-perfil {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #6366f1;
+  margin-bottom: 10px;
+}
+
+.btn-foto {
+  background: #6366f1;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-foto input {
+  display: none;
+}
+

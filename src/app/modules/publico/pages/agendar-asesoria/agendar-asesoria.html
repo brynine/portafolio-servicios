@@ -1,0 +1,17 @@
+<h2>Agendar asesoría</h2>
+
+<form (ngSubmit)="agendar()">
+  <label>Nombre</label>
+  <input type="text" [(ngModel)]="asesoria.nombre" name="nombre" required />
+
+  <label>Correo</label>
+  <input type="email" [(ngModel)]="asesoria.correo" name="correo" required />
+
+  <label>Fecha deseada</label>
+  <input type="date" [(ngModel)]="asesoria.fecha" name="fecha" required />
+
+  <label>Mensaje</label>
+  <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>
+
+  <button type="submit">Solicitar asesoría</button>
+</form>

@@ -1,10 +1,30 @@
-<div
-  *ngIf="!isHome()"
-  style="padding: 10px; background: #f3f3f3; display: flex; gap: 10px; justify-content: center"
->
-  <button routerLink="/">Inicio</button>
+<div class="loader-overlay" *ngIf="cargandoRuta">Cargando...</div>
 
-  <button (click)="irAtras()">Regresar</button>
+<div class="layout-container">
+  <div *ngIf="!isHome() && auth.currentUserData" class="global-header">
+    <div class="header-right">
+      <img
+        class="avatar"
+        [src]="
+          $any(auth.currentUserData)?.photo ||
+          $any(auth.currentUserData)?.picture ||
+          'assets/user-icon.svg'
+        "
+        alt="avatar"
+        (click)="mostrarMenu = !mostrarMenu"
+        referrerpolicy="no-referrer"
+      />
+
+      <div *ngIf="mostrarMenu" class="menu-user">
+        <button (click)="cambiarCuenta()">Cambiar cuenta</button>
+        <button class="logout" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <button *ngIf="!auth.currentUserData && !isHome()" class="btn-volver" (click)="irAtras()">
+    ← Volver
+  </button>
+
+  <router-outlet></router-outlet>
 </div>
-
-<router-outlet></router-outlet>

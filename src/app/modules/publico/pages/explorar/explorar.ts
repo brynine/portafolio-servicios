@@ -183,8 +183,11 @@ generarHorasDisponibles() {
 
   if (!horarioDia) {
     this.horasDisponibles = [];
+    this.mensajeHora = "El programador no tiene disponibilidad ese día.";
     return;
   }
+
+  this.mensajeHora = "";
 
   const inicio = parseInt(horarioDia.horaInicio.split(":")[0]);
   const fin = parseInt(horarioDia.horaFin.split(":")[0]);
@@ -198,14 +201,25 @@ generarHorasDisponibles() {
   this.horasDisponibles = horas;
 }
 
-validarHora() {
-  if (!this.asesoria.hora || !this.horariosProgramador.length) return;
 
-  const fecha = new Date(this.asesoria.fecha);
-  const dia = fecha.toLocaleString('es-ES', { weekday: 'long' }).toLowerCase();
+validarHora() {
+  if (!this.asesoria.hora || !this.asesoria.fecha || !this.horariosProgramador.length) return;
+
+  const partes = this.asesoria.fecha.split("-");
+  const anio = parseInt(partes[0], 10);
+  const mes = parseInt(partes[1], 10) - 1;
+  const diaNum = parseInt(partes[2], 10);
+
+  const fecha = new Date(anio, mes, diaNum);
+
+  const diaSemana = fecha.getDay();
+  const mapaDias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const nombreDia = mapaDias[diaSemana];
+
+  console.log("validarHora → fecha:", this.asesoria.fecha, "día:", nombreDia);
 
   const horarioDia = this.horariosProgramador.find(
-    h => h.dia.toLowerCase() === dia
+    h => h.dia.toLowerCase() === nombreDia
   );
 
   if (!horarioDia) {
@@ -223,6 +237,7 @@ validarHora() {
     this.mensajeHora = "";
   }
 }
+
 
 volverHome() {
   window.location.href = '/';

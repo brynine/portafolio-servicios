@@ -8,10 +8,23 @@
   <input type="email" [(ngModel)]="asesoria.correo" name="correo" required />
 
   <label>Fecha deseada</label>
-  <input type="date" [(ngModel)]="asesoria.fecha" name="fecha" required />
+  <input type="date" name="fecha" [(ngModel)]="asesoria.fecha" (change)="onFechaChange($event)" />
+
+  <label>Hora</label>
+
+  <select *ngIf="!sinDisponibilidad" [(ngModel)]="asesoria.hora" name="hora" required>
+    <option value="" disabled selected>Selecciona una hora</option>
+    <option *ngFor="let h of horasDisponibles" [value]="h">{{ h }}</option>
+  </select>
+
+  <p *ngIf="sinDisponibilidad" style="color: red; font-weight: bold">
+    El programador no tiene disponibilidad ese día.
+  </p>
 
   <label>Mensaje</label>
   <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>
 
-  <button type="submit">Solicitar asesoría</button>
+  <button type="submit" [disabled]="sinDisponibilidad || !asesoria.fecha || !asesoria.hora">
+    Solicitar asesoría
+  </button>
 </form>

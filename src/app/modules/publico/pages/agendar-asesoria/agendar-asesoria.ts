@@ -14,7 +14,7 @@ import { AuthService } from '../../../../core/services/auth';
 })
 export class AgendarAsesoriaComponent implements OnInit {
 
-  @Input() programadorId: string = '';
+  @Input() programadorId: string = ''; 
 
   asesoria = {
     nombre: '',
@@ -24,15 +24,15 @@ export class AgendarAsesoriaComponent implements OnInit {
     hora: ''      
   };
 
-  horarios: any[] = [];
-  horariosDelDia: any[] = [];
-  horasDisponibles: string[] = [];
-  sinDisponibilidad = false;
+  horarios: any[] = [];  
+  horariosDelDia: any[] = []; 
+  horasDisponibles: string[] = []; 
+  sinDisponibilidad = false;     
 
   constructor(
     private firestore: Firestore,
-    private route: ActivatedRoute,
-    public auth: AuthService
+    private route: ActivatedRoute, 
+    public auth: AuthService         
   ) {}
 
   async ngOnInit() {
@@ -56,40 +56,44 @@ export class AgendarAsesoriaComponent implements OnInit {
   }
 
   onFechaChange(event: any) {
+    const valor = event.target.value;
+    this.asesoria.fecha = valor;
 
-  const valor = event.target.value;
-  this.asesoria.fecha = valor;
+    if (!valor) return;
 
-  if (!valor) return;
+    // convierte la fecha seleccionada a formato Date
+    const fecha = new Date(valor + 'T00:00:00');
 
-  const fecha = new Date(valor + 'T00:00:00');
+    const diaTexto = fecha.toLocaleDateString('es-ES', { weekday: 'long' });
+    const diaNormalizado = this.normalizar(diaTexto);
 
-  const diaTexto = fecha.toLocaleDateString('es-ES', { weekday: 'long' });
-  const diaNormalizado = this.normalizar(diaTexto);
+    console.log("Fecha seleccionada:", valor);
+    console.log("Día calculado:", diaTexto);
 
-  console.log("Fecha seleccionada:", valor);
-  console.log("Día calculado:", diaTexto);
+    // filtra los horarios del programador según el día
+    this.horariosDelDia = this.horarios.filter(h =>
+      this.normalizar(h.dia) === diaNormalizado
+    );
 
-  this.horariosDelDia = this.horarios.filter(h =>
-    this.normalizar(h.dia) === diaNormalizado
-  );
+    // si el programador no tiene disponibilidad ese día
+    if (this.horariosDelDia.length === 0) {
+      this.sinDisponibilidad = true;
+      this.horasDisponibles = [];
+      this.asesoria.hora = '';
+      return;
+    }
 
-  if (this.horariosDelDia.length === 0) {
-    this.sinDisponibilidad = true;
-    this.horasDisponibles = [];
+    this.sinDisponibilidad = false;
+
+    // genera las horas disponibles según el rango del horario
+    const horario = this.horariosDelDia[0];
+    this.generarHoras(horario.horaInicio, horario.horaFin);
+
     this.asesoria.hora = '';
-    return;
   }
 
-  this.sinDisponibilidad = false;
-
-  const horario = this.horariosDelDia[0];
-  this.generarHoras(horario.horaInicio, horario.horaFin);
-
-  this.asesoria.hora = '';
-}
-
   normalizar(str: string): string {
+    // elimina tildes para comparar textos de forma segura
     return str
       .toLowerCase()
       .normalize("NFD")
@@ -97,6 +101,7 @@ export class AgendarAsesoriaComponent implements OnInit {
   }
 
   generarHoras(inicio: string, fin: string) {
+    // genera la lista de horas completas entre inicio y fin
     const [hIni] = inicio.split(':').map(Number);
     const [hFin] = fin.split(':').map(Number);
 
@@ -114,6 +119,7 @@ export class AgendarAsesoriaComponent implements OnInit {
 
   async agendar() {
 
+    // validaciones básicas antes de guardar
     if (this.sinDisponibilidad) {
       alert('El programador no tiene disponibilidad ese día.');
       return;
@@ -129,6 +135,7 @@ export class AgendarAsesoriaComponent implements OnInit {
       return;
     }
 
+    // guarda la asesoría en firebase
     const asesoriasRef = collection(this.firestore, 'asesorias');
 
     const data = {
@@ -142,6 +149,7 @@ export class AgendarAsesoriaComponent implements OnInit {
 
     alert('Asesoría solicitada correctamente');
 
+    // limpia formulario
     this.asesoria = {
       nombre: '',
       correo: '',

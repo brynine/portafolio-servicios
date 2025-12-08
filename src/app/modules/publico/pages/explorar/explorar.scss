@@ -1,3 +1,4 @@
+/* encabezado principal de la vista explorar */
 .header-explorar {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark), #110033);
   color: white;
@@ -7,6 +8,7 @@
   box-shadow: none;
 }
 
+/* estilos del título principal */
 .header-explorar h1 {
   font-size: clamp(32px, 5vw, 45px);
   font-weight: 800;
@@ -14,18 +16,21 @@
   letter-spacing: 2px;
 }
 
+/* subtítulo */
 .header-explorar .sub {
   color: #ddd;
   font-size: clamp(14px, 2vw, 18px);
   margin-top: 5px;
 }
 
+/* contenedor general */
 .explorar-container {
   padding: 40px 20px;
   margin: auto;
   max-width: 1300px;
 }
 
+/* cuadrícula de tarjetas responsiva */
 .cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
@@ -34,6 +39,7 @@
   justify-items: center;
 }
 
+/* diseño de cada card de programador */
 .card {
   background: #3A2B84;
   border-radius: 22px;
@@ -54,6 +60,7 @@
   }
 }
 
+/* avatar del programador */
 .avatar {
   width: 95px;
   height: 95px;
@@ -63,6 +70,7 @@
   margin-bottom: 12px;
 }
 
+/* nombre del programador */
 .card h3 {
   font-size: 19px;
   font-weight: 700;
@@ -70,6 +78,7 @@
   color: white;
 }
 
+/* especialidad del usuario */
 .especialidad {
   font-size: 14px;
   font-weight: 500;
@@ -77,12 +86,14 @@
   margin-bottom: 20px;
 }
 
+/* layout de botones dentro de la tarjeta */
 .card-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* estilos base de botones */
 .card-buttons button {
   padding: 12px;
   border-radius: 14px;
@@ -96,6 +107,7 @@
   transition: 0.25s ease;
 }
 
+/* estilos consistentes entre botones principales */
 .btn-perfil,
 .btn-portafolio,
 .btn-agendar {
@@ -109,6 +121,7 @@
   }
 }
 
+/* íconos de redes sociales */
 .redes {
   display: flex;
   justify-content: center;
@@ -116,6 +129,7 @@
   margin-top: 15px;
 }
 
+/* estilo base para cada ícono social */
 .social {
   font-size: 26px;
   padding: 10px;
@@ -134,11 +148,13 @@
   }
 }
 
+/* colores específicos por red */
 .github { background: #24292f; }
 .instagram { background: #E1306C; }
 .linkedin { background: #0077b5; }
 .website { background: var(--primary); }
 
+/* fondo del modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -151,6 +167,7 @@
   animation: fadeIn .3s ease-out;
 }
 
+/* contenedor del modal */
 .modal,
 .modal-asesoria,
 .portafolio-modal,
@@ -165,6 +182,7 @@
   color: white;
 }
 
+/* foto grande en modal */
 .perfil-foto {
   width: 120px !important;
   height: 120px !important;
@@ -181,6 +199,7 @@
   box-shadow: 0px 0px 25px rgba(108, 71, 255, 0.45);
 }
 
+/* inputs para formularios en modales */
 .modal input,
 .modal textarea,
 .form-group input,
@@ -205,10 +224,12 @@
   color: rgba(255,255,255,0.5);
 }
 
+/* espaciado */
 .form-group {
   margin-bottom: 12px;
 }
 
+/* botones inferiores del modal */
 .modal-actions {
   display: flex;
   justify-content: space-between;
@@ -216,6 +237,7 @@
   margin-top: 20px;
 }
 
+/* botón enviar */
 .btn-enviar {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
@@ -226,6 +248,7 @@
   }
 }
 
+/* botones cancelar/cerrar */
 .btn-cancelar,
 .btn-cerrar {
   background: rgba(255,255,255,0.08);
@@ -238,6 +261,7 @@
   }
 }
 
+/* permite scroll si el modal es largo */
 .modal,
 .modal-asesoria,
 .portafolio-modal {
@@ -246,6 +270,7 @@
   padding-bottom: 25px;
 }
 
+/* corrige estilos automáticos en inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -257,6 +282,7 @@ input:-webkit-autofill:active {
   border: 1px solid rgba(255,255,255,0.18) !important;
 }
 
+/* adaptaciones móviles */
 @media (max-width: 760px) {
   .modal,
   .modal-asesoria,
@@ -267,6 +293,7 @@ input:-webkit-autofill:active {
   }
 }
 
+/* repetido pero usado para consistencia */
 .modal-actions {
   display: flex;
   justify-content: space-between;
@@ -274,6 +301,7 @@ input:-webkit-autofill:active {
   margin-top: 25px;
 }
 
+/* estilo final del botón enviar */
 .btn-enviar {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
@@ -295,6 +323,7 @@ input:-webkit-autofill:active {
   }
 }
 
+/* botones secundarios */
 .btn-cancelar,
 .btn-cerrar {
   background: rgba(255,255,255,0.07);
@@ -315,12 +344,14 @@ input:-webkit-autofill:active {
   }
 }
 
+/* versiones móviles */
 @media (max-width: 500px) {
   .modal-actions {
     flex-direction: column;
   }
 }
 
+/* espacio extra para botones del modal */
 .perfil-modal .btn-cerrar {
   margin-top: 20px !important;
 }
@@ -329,19 +360,89 @@ input:-webkit-autofill:active {
   margin-top: 20px;
 }
 
+/* control de alineación de inputs */
 .modal .form-group,
 .modal-asesoria .form-group {
   max-width: 95%;
   margin-inline: center;
 }
 
+/* ajustes menores */
 .form-group {
   margin-bottom: 5px !important;
 }
 
+/* color de fondo general */
 body, .explorar-wrapper {
   background: #0A0A14 !important;
   min-height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+/* fuente personalizada */
+@import url('https://fonts.googleapis.com/css2?family=Lemon/Milk&display=swap');
+
+/* capa oscura del modal de confirmación */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* caja de confirmación */
+.confirm-modal {
+  background: #1a1a1e;
+  padding: 30px;
+  border-radius: 20px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0px 0px 25px rgba(117, 72, 255, 0.4);
+  border: 2px solid #6c4bff;
+  animation: show 0.3s ease-out;
+}
+
+/* texto dentro del modal */
+.confirm-modal h2 {
+  font-family: 'Lemon/Milk', sans-serif;
+  color: #ffffff;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.confirm-modal p {
+  color: #dcdcdc;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+/* botón confirmar */
+.close-btn {
+  background: #6c4bff;
+  color: #ffffff;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+  font-family: 'Lemon/Milk', sans-serif;
+}
+
+.close-btn:hover {
+  background: #8b6aff;
+  transform: scale(1.05);
+}
+
+/* animación de aparición */
+@keyframes show {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }

@@ -21,8 +21,10 @@ import {
 
 import { environment } from '../../../environments/environment';
 
+// tipos de rol permitidos
 export type UserRole = 'admin' | 'programador' | 'externo';
 
+// estructura del usuario almacenado en firestore
 export interface AppUser {
   uid: string;
   name: string | null;
@@ -41,31 +43,50 @@ export class AuthService {
   private auth: Auth;
   private db: Firestore;
 
+  // datos del usuario ya procesados desde firestore
   public currentUserData: AppUser | null = null;
+
+  // indica cuando firebase terminó de cargar el estado
   public authLoaded = false;
 
+  // listeners opcionales para sincronizar datos en componentes
   private userDataListeners: ((u: AppUser | null) => void)[] = [];
 
+  // promesa usada para esperar a firebase antes de ejecutar guards
+  public authReady: Promise<void>;
+  private resolveAuthReady!: () => void;
+
   constructor() {
+
+    // inicializa firebase con las credenciales
     this.app = initializeApp(environment.firebase);
     this.auth = getAuth(this.app);
     this.db = getFirestore(this.app);
 
-    console.log("Firebase inicializado correctamente");
+    // crea la promesa que avisará que autenticación está lista
+    this.authReady = new Promise(resolve => this.resolveAuthReady = resolve);
 
-onAuthStateChanged(this.auth, async (user) => {
-  if (user) {
-    await this.loadUserData(user);
-  } else {
-    this.currentUserData = null;
-    this.emitUserDataChange();
+    // escucha cambios de sesión del usuario
+    onAuthStateChanged(this.auth, async (user) => {
+
+      if (user) {
+        // carga los datos del usuario registrado en firestore
+        await this.loadUserData(user);
+      } else {
+        // si no hay usuario, restablece valores
+        this.currentUserData = null;
+        this.emitUserDataChange();
+      }
+
+      this.authLoaded = true;
+      this.emitAppUserReady();
+
+      // indica que firebase terminó de verificar la sesión
+      this.resolveAuthReady();
+    });
   }
 
-  this.authLoaded = true;
-  this.emitAppUserReady();
-});
-  }
-
+  // permite que los componentes reciban actualizaciones del usuario
   onUserDataChange(cb: (u: AppUser | null) => void) {
     this.userDataListeners.push(cb);
 
@@ -80,6 +101,7 @@ onAuthStateChanged(this.auth, async (user) => {
     }
   }
 
+  // proceso de inicio de sesión usando google popup
   async loginWithGoogle(): Promise<User | null> {
     try {
       const provider = new GoogleAuthProvider();
@@ -87,12 +109,9 @@ onAuthStateChanged(this.auth, async (user) => {
 
       const result = await signInWithPopup(this.auth, provider);
       const user = result.user;
-
       if (!user) return null;
 
-      console.log("Usuario autenticado:", user.email);
-
-      await this.saveUserIfNotExists(user);
+      await this.saveUserFix(user);
       await this.loadUserData(user);
 
       return user;
@@ -102,59 +121,62 @@ onAuthStateChanged(this.auth, async (user) => {
       return null;
     }
   }
-  // Guardar y actualizar usuario
-  private async saveUserIfNotExists(user: User): Promise<void> {
+
+  // guarda el usuario en firestore si aún no existe
+  private async saveUserFix(user: User): Promise<void> {
+
+    const normalizedEmail = user.email?.toLowerCase() || "";
 
     const q = query(
       collection(this.db, 'users'),
-      where('email', '==', user.email)
+      where('email', '==', normalizedEmail)
     );
 
     const snap = await getDocs(q);
 
+    // intenta obtener la foto del perfil real del usuario
     const googlePhoto =
       user.photoURL ||
       (user as any).reloadUserInfo?.photoUrl ||
       null;
 
     if (!snap.empty) {
+      // si existe, solo actualiza información básica
       const docRef = snap.docs[0].ref;
-      const data = snap.docs[0].data() as AppUser;
-
-      console.log("Usuario existe. Actualizando datos con Google...");
 
       await setDoc(docRef, {
-        ...data,
         uid: user.uid,
-        photo: googlePhoto,
         name: user.displayName,
+        photo: googlePhoto,
         updatedAt: new Date()
       }, { merge: true });
 
       return;
     }
 
+    // si el usuario es nuevo, se almacena con rol externo por defecto
     const newUser: AppUser = {
       uid: user.uid,
       name: user.displayName,
-      email: user.email,
+      email: normalizedEmail,
       photo: googlePhoto,
-      role: 'externo'
+      role: 'externo',
     };
 
     await setDoc(doc(this.db, 'users', user.uid), {
       ...newUser,
       createdAt: new Date()
     });
-
-    console.log("Usuario externo creado en Firestore");
   }
-  // Cargar datos del usuario
+
+  // obtiene los datos del usuario desde firestore
   private async loadUserData(user: User): Promise<void> {
+
+    const normalizedEmail = user.email?.toLowerCase() || "";
 
     const q = query(
       collection(this.db, 'users'),
-      where('email', '==', user.email)
+      where('email', '==', normalizedEmail)
     );
 
     const snap = await getDocs(q);
@@ -165,6 +187,7 @@ onAuthStateChanged(this.auth, async (user) => {
       null;
 
     if (!snap.empty) {
+      // si existe en firestore, sincroniza datos locales
       const data = snap.docs[0].data() as AppUser;
       const docRef = snap.docs[0].ref;
 
@@ -183,10 +206,11 @@ onAuthStateChanged(this.auth, async (user) => {
       return;
     }
 
+    // si el usuario no existía, se crea con valores por defecto
     const newUser: AppUser = {
       uid: user.uid,
       name: user.displayName,
-      email: user.email,
+      email: normalizedEmail,
       photo: googlePhoto,
       role: 'externo'
     };
@@ -195,10 +219,10 @@ onAuthStateChanged(this.auth, async (user) => {
 
     this.currentUserData = newUser;
     this.emitUserDataChange();
-this.emitAppUserReady();
-
+    this.emitAppUserReady();
   }
 
+  // métodos utilitarios de rol
   getRole(): UserRole | null {
     return this.currentUserData?.role || null;
   }
@@ -211,29 +235,32 @@ this.emitAppUserReady();
     return this.currentUserData?.role === 'programador';
   }
 
+  // obtiene el usuario desde firebase auth
   getCurrentUser(): User | null {
     return this.auth.currentUser;
   }
 
+  // escucha cambios de autenticación
   onAuthChange(callback: (user: User | null) => void) {
     return onAuthStateChanged(this.auth, callback);
   }
 
+  // cierre de sesión
   async logout(): Promise<void> {
     this.currentUserData = null;
     this.emitUserDataChange();
     await signOut(this.auth);
   }
 
-private appUserReadyListeners: (() => void)[] = [];
+  private appUserReadyListeners: (() => void)[] = [];
 
-onAppUserReady(cb: () => void) {
-  this.appUserReadyListeners.push(cb);
-  if (this.currentUserData) cb();
-}
+  // permite ejecutar acciones cuando los datos del usuario ya están disponibles
+  onAppUserReady(cb: () => void) {
+    this.appUserReadyListeners.push(cb);
+    if (this.currentUserData) cb();
+  }
 
-private emitAppUserReady() {
-  for (const cb of this.appUserReadyListeners) cb();
-}
-
+  emitAppUserReady() {
+    for (const cb of this.appUserReadyListeners) cb();
+  }
 }

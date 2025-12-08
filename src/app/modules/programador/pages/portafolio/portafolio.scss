@@ -139,7 +139,7 @@ body, html {
 .formulario textarea:focus,
 .formulario select:focus {
   border-color: #6b4dff;
-  box-shadow: 0 0 12px rgba(102,67,255,0.45);
+  box-shadow: 0 0 12px rgba(102,67,255,0.45); /* realce en focus */
 }
 
 input::placeholder,
@@ -148,7 +148,7 @@ textarea::placeholder {
 }
 
 .tarjeta {
-  background: #17172a;
+  background: #17172a; /* tarjeta para proyectos o asesorías */
   padding: 22px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.15);
@@ -162,6 +162,7 @@ textarea::placeholder {
   box-shadow: 0px 10px 28px rgba(102,67,255,0.4);
 }
 
+/* colores según estado de la asesoría */
 .aprobado { color: #10b981; font-weight: 600; }
 .rechazado { color: #ef4444; font-weight: 600; }
 .realizado { color: #3b82f6; font-weight: 600; }
@@ -191,7 +192,7 @@ button {
   margin-top: 15px;
   display: flex;
   gap: 15px;
-  justify-content: flex-end;
+  justify-content: flex-end; /* botones alineados a la derecha */
 }
 
 .acciones button {
@@ -201,13 +202,13 @@ button {
 }
 
 .acciones button:first-child {
-  background: #6b4dff;
+  background: #6b4dff; /* botón principal, por ejemplo editar o aprobar */
   color: white;
   box-shadow: 0px 5px 15px rgba(102,67,255,0.4);
 }
 
 .acciones button:last-child {
-  background: #ff2e4c;
+  background: #ff2e4c; /* botón de eliminar o acción crítica */
   color: white;
   box-shadow: 0px 5px 15px rgba(255,46,76,0.4);
 }
@@ -252,12 +253,12 @@ button {
 }
 
 .btn-foto input {
-  display: none;
+  display: none; /* se oculta el input y se deja el label como botón */
 }
 
 @media(max-width: 768px){
   .menu-interno {
-    flex-direction: column;
+    flex-direction: column; /* menú en columna en móvil */
     gap: 15px;
   }
 
@@ -266,6 +267,7 @@ button {
   }
 }
 
+/* aquí sobreescribes fuente solo en inputs para mejor legibilidad de texto largo */
 input, textarea, select {
   font-family: "Poppins", sans-serif !important;
   text-transform: none !important;
@@ -275,4 +277,165 @@ input, textarea, select {
 input::placeholder, textarea::placeholder {
   font-family: "Poppins", sans-serif !important;
   text-transform: none !important;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.confirm-modal {
+  background: #1a1a1e;
+  padding: 30px;
+  width: 420px;
+  border-radius: 18px;
+  text-align: center;
+  border: 2px solid #6c4bff;
+  box-shadow: 0px 0px 20px rgba(108, 75, 255, 0.4);
+  animation: scaleIn .25s ease-out;
+}
+
+.confirm-modal h2 {
+  font-family: 'Lemon/Milk', sans-serif;
+  color: #ffffff;
+}
+
+.confirm-modal p {
+  color: #dcdcdc;
+  margin-bottom: 20px;
+}
+
+.close-btn {
+  background: #6c4bff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Lemon/Milk', sans-serif;
+  color: white;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  transform: scale(1.05);
+  background: #8b6aff;
+}
+
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cancel {
+  background: #444;
+}
+
+.confirm {
+  background: #e91e63;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.btn.eliminar {
+  background: #ff3b30;
+}
+
+.btn.eliminar:hover {
+  background: #ff625e;
+  transform: scale(1.05);
+}
+
+/* ==========================
+optimización para móvil
+========================== */
+@media (max-width: 768px) {
+
+  .banner-content h1 {
+    font-size: 30px;
+  }
+
+  .banner-content p {
+    font-size: 14px;
+  }
+
+  .programador-card,
+  .seccion {
+    width: 90%;
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .tarjeta {
+    padding: 16px;
+    font-size: 15px;
+  }
+
+  .acciones {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .acciones button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+  }
+
+  .menu-interno {
+    width: 90%;
+    margin: auto;
+    gap: 10px;
+  }
+
+  .menu-interno button {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+  }
+
+  input, textarea, select {
+    font-size: 14px;
+  }
+
+  .confirm-modal {
+    width: 90%;
+    padding: 25px;
+  }
+
+  .confirm-modal h2 {
+    font-size: 20px;
+  }
+
+  .confirm-modal p {
+    font-size: 14px;
+  }
+
+  .btn-row {
+    flex-direction: column;
+  }
+
+  .btn-row button {
+    width: 100%;
+  }
+}
+
+/* ==========================
+fix textos largos (email, urls, mensajes)
+========================== */
+.tarjeta p,
+.tarjeta span,
+.tarjeta strong {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
 }

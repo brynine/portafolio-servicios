@@ -1,21 +1,26 @@
 <div class="home-wrapper">
   <div class="left-panel">
+    <!-- contenido visible solo si el usuario no ha iniciado sesión -->
     <div *ngIf="!auth.currentUserData" class="login-box">
       <h1 class="title">Portafolio de Programadores</h1>
       <p class="subtitle">Encuentra talento, revisa proyectos y agenda asesorías personalizadas.</p>
 
+      <!-- botón que ejecuta inicio de sesión con google -->
       <button class="google-btn" (click)="loginGoogle()">
         <img src="assets/google-icon.svg" alt="Google" />
         Iniciar sesión con Google
       </button>
 
+      <!-- acción pública para redirigir a agendamiento -->
       <button class="btn-primary" (click)="agendarAsesoriaHome()">Agendar asesoría</button>
     </div>
 
+    <!-- visible cuando existe sesión -->
     <div *ngIf="auth.currentUserData" class="logged-box"></div>
   </div>
 
   <div class="right-panel">
+    <!-- contenido informativo/branding -->
     <div class="decor-card">
       <h2>Desarrollo | Innovación | Tecnología</h2>
       <p>Conecta con los mejores programadores y construye tus ideas con asesoría profesional.</p>

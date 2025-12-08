@@ -16,8 +16,7 @@ export class App {
   mostrarMenu = false;
   mostrarPerfil = false;
   redirigido = false; 
-
-  cargandoRuta = true;
+  cargandoRuta = true; // controla animación de carga de rutas
 
   constructor(
     public auth: AuthService,
@@ -25,70 +24,69 @@ export class App {
     public router: Router
   ) {
 
+    // escucha cambios en la navegación para activar loader
     this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) this.cargandoRuta = true;
+      if (event instanceof NavigationEnd) setTimeout(() => this.cargandoRuta = false, 100);
+    });
 
-      if (event instanceof NavigationStart) {
-        this.cargandoRuta = true;
+    // fallback por si algo se traba al cargar
+    setTimeout(() => this.cargandoRuta = false, 300);
+
+    // escucha cambios del usuario (login / logout / cambio de rol)
+    this.auth.onUserDataChange((userData) => {
+
+      const rutaActual = this.router.url;
+
+      // rutas donde no se fuerza redirección
+      const rutasPublicas = [
+        '/',
+        '/explorar'
+      ];
+
+      // permitir ruta dinámica
+      if (rutaActual.startsWith('/agendar-asesoria/')) {
+        rutasPublicas.push(rutaActual);
       }
 
-      if (event instanceof NavigationEnd) {
-        setTimeout(() => {
-          this.cargandoRuta = false;
-        }, 100);
+      // si no hay usuario no hace nada
+      if (!userData) {
+        this.redirigido = false;
+        return;
+      }
+
+      console.log("🔄 Cambio detectado - Nuevo Rol:", userData.role);
+
+      // evita redirecciones repetidas
+      if (this.redirigido) return;
+
+      const role = userData.role;
+
+      // redirección automática según rol
+      if (role === 'admin') {
+        this.redirigido = true;
+        this.router.navigate(['/admin']);
+      } 
+      else if (role === 'programador') {
+        this.redirigido = true;
+        this.router.navigate(['/programador']);
+      } 
+      else {
+        this.redirigido = true;
+        this.router.navigate(['/explorar']);
       }
     });
 
-    setTimeout(() => {
-      this.cargandoRuta = false;
-    }, 300);
-
-    this.auth.onUserDataChange((userData) => {
-
-  const rutaActual = this.router.url;
-
-  const rutasPublicas = [
-    '/',
-    '/explorar'
-  ];
-
-  if (rutaActual.startsWith('/agendar-asesoria/')) {
-    rutasPublicas.push(rutaActual);
   }
 
-  if (!userData) {
-    this.redirigido = false;
-    return;
-  }
-
-  if (this.redirigido) return;
-
-  const role = userData.role;
-
-  if (role === 'admin') {
-    this.redirigido = true;
-    this.router.navigate(['/admin']);
-  } 
-  else if (role === 'programador') {
-    this.redirigido = true;
-    this.router.navigate(['/programador']);
-  } 
-  else {
-    this.redirigido = true;
-    this.router.navigate(['/explorar']);
-  }
-});
-
-  }
-
+  // login con google
   async loginGoogle() {
     const user = await this.auth.loginWithGoogle();
     if (!user) return;
 
-    const role = this.auth.getRole();
-
-    if (role === 'admin') this.router.navigate(['/admin']);
-    else if (role === 'programador') this.router.navigate(['/programador']);
-    else this.router.navigate(['/explorar']);
+    // notifica a la app que el usuario ya está listo
+    this.redirigido = false;
+    this.auth.emitAppUserReady();
   }
 
   abrirPerfil() {
@@ -100,12 +98,17 @@ export class App {
     this.mostrarPerfil = false;
   }
 
+  // cambia de cuenta manteniendo la lógica del rol
   async cambiarCuenta() {
     this.mostrarMenu = false;
     this.redirigido = false;
-    await this.auth.loginWithGoogle();
+
+    const user = await this.auth.loginWithGoogle();
+
+    if (user) this.auth.emitAppUserReady();
   }
 
+  // logout completo
   async logout() {
     this.mostrarMenu = false;
     this.redirigido = false;
@@ -113,10 +116,12 @@ export class App {
     this.router.navigate(['/']);
   }
 
+  // retroceder en historial
   irAtras() {
     this.location.back();
   }
 
+  // detectar si está en la home para ocultar botón
   isHome() {
     return this.router.url === '/';
   }

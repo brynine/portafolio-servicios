@@ -24,6 +24,7 @@ import { environment } from '../../../../../environments/environment';
 })
 export class HomeComponent implements OnInit {
 
+  // conexión local a firestore
   db = getFirestore(initializeApp(environment.firebase));
 
   programadores: any[] = [];
@@ -37,28 +38,31 @@ export class HomeComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    // cargar lista de programadores visibles
     await this.cargarProgramadores();
   }
 
   async loginGoogle() {
-  try {
-    await this.auth.loginWithGoogle();
-  } catch (error) {
-    console.error('Error en login:', error);
+    try {
+      // inicio de sesión usando google
+      await this.auth.loginWithGoogle();
+    } catch (error) {
+      console.error('Error en login:', error);
+    }
   }
-}
-
 
   async cargarProgramadores() {
     const ref = collection(this.db, 'users');
     const snap = await getDocs(ref);
 
+    // solo roles programador visibles
     this.programadores = snap.docs
       .map(d => d.data())
       .filter((u: any) => u.role === 'programador');
   }
 
   async agendarAsesoria() {
+    // validación básica de formulario
     if (!this.programadorSeleccionado || !this.fechaSeleccionada) {
       alert('Debes seleccionar programador y fecha');
       return;
@@ -69,6 +73,7 @@ export class HomeComponent implements OnInit {
       return;
     }
 
+    // estructura de documento a guardar
     const solicitud = {
       solicitante: this.auth.currentUserData.uid,
       programador: this.programadorSeleccionado,
@@ -78,16 +83,19 @@ export class HomeComponent implements OnInit {
       createdAt: new Date()
     };
 
+    // guarda solicitud en firestore
     await addDoc(collection(this.db, 'asesorias'), solicitud);
 
     alert('Asesoría enviada correctamente');
 
+    // reset de campos
     this.comentario = '';
-    this.fechaSeleccionada = '';
+   	this.fechaSeleccionada = '';
     this.programadorSeleccionado = '';
   }
 
   entrar() {
+    // redirección según rol
     const role = this.auth.getRole();
 
     if (role === 'admin') {

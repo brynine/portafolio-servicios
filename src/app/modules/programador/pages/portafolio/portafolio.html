@@ -1,4 +1,5 @@
 <div class="programador-banner">
+  <!-- encabezado del panel -->
   <div class="banner-content">
     <h1>PANEL DEL PROGRAMADOR</h1>
     <p>GESTIONA PROYECTOS, ASESORÍAS Y TU PERFIL</p>
@@ -6,6 +7,7 @@
 </div>
 
 <div class="programador-canvas">
+  <!-- menú interno para cambiar entre secciones -->
   <div class="menu-interno">
     <button (click)="vista = 'agregar'" [class.activo]="vista === 'agregar'">
       ➕ Agregar Proyecto
@@ -20,9 +22,11 @@
   </div>
 
   <div class="programador-card">
+    <!-- seccion: agregar proyecto -->
     <div *ngIf="vista === 'agregar'" class="seccion">
       <h3>Agregar nuevo proyecto</h3>
 
+      <!-- formulario bidireccional con ngModel -->
       <form (ngSubmit)="guardarProyecto()" class="formulario">
         <label>Nombre del proyecto</label>
         <input type="text" [(ngModel)]="nuevoProyecto.nombre" name="nombre" required />
@@ -30,6 +34,7 @@
         <label>Descripción</label>
         <textarea [(ngModel)]="nuevoProyecto.descripcion" name="descripcion" required></textarea>
 
+        <!-- agrupación visual de tipo y rol -->
         <div class="doble">
           <div>
             <label>Tipo de proyecto</label>
@@ -50,12 +55,7 @@
         </div>
 
         <label>Tecnologías usadas</label>
-        <input
-          type="text"
-          [(ngModel)]="nuevoProyecto.tecnologias"
-          name="tecnologias"
-          placeholder="Angular, Firebase, MySQL"
-        />
+        <input type="text" [(ngModel)]="nuevoProyecto.tecnologias" name="tecnologias" />
 
         <label>Repositorio (GitHub)</label>
         <input type="text" [(ngModel)]="nuevoProyecto.repositorio" name="repositorio" />
@@ -67,7 +67,9 @@
       </form>
     </div>
 
+    <!-- seccion: listar proyectos -->
     <div *ngIf="vista === 'proyectos'" class="seccion">
+      <!-- buscador dinámico -->
       <input
         class="buscador"
         type="text"
@@ -76,51 +78,114 @@
         (input)="filtrarProyectos()"
       />
 
+      <!-- lista generada desde Firestore -->
       <div class="tarjeta" *ngFor="let p of proyectosFiltrados">
         <h3>{{ p.nombre }}</h3>
         <p><strong>Tecnologías:</strong> {{ p.tecnologias }}</p>
         <p>{{ p.descripcion }}</p>
 
+        <!-- botones acciones -->
         <div class="acciones">
           <button (click)="editarProyecto(p)">Editar</button>
-          <button (click)="eliminarProyecto(p.id)">Eliminar</button>
+          <button class="eliminar-btn" (click)="confirmarEliminarProyecto(p.id)">Eliminar</button>
         </div>
       </div>
     </div>
 
+    <!-- seccion: editar proyecto existente -->
+    <div *ngIf="vista === 'editar-proyecto'" class="seccion">
+      <h3>Editar proyecto</h3>
+
+      <form (ngSubmit)="actualizarProyecto()" class="formulario">
+        <label>Nombre del proyecto</label>
+        <input type="text" [(ngModel)]="proyectoEditando.nombre" name="editNombre" required />
+
+        <label>Descripción</label>
+        <textarea
+          [(ngModel)]="proyectoEditando.descripcion"
+          name="editDescripcion"
+          required
+        ></textarea>
+
+        <div class="doble">
+          <div>
+            <label>Tipo</label>
+            <select [(ngModel)]="proyectoEditando.tipo" name="editTipo">
+              <option value="academico">Académico</option>
+              <option value="laboral">Laboral</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Rol</label>
+            <select [(ngModel)]="proyectoEditando.participacion" name="editRol">
+              <option value="frontend">Frontend</option>
+              <option value="backend">Backend</option>
+              <option value="base-datos">Base de datos</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Tecnologías</label>
+        <input type="text" [(ngModel)]="proyectoEditando.tecnologias" name="editTec" />
+
+        <label>Repositorio</label>
+        <input type="text" [(ngModel)]="proyectoEditando.repositorio" name="editRepo" />
+
+        <label>Deploy</label>
+        <input type="text" [(ngModel)]="proyectoEditando.deploy" name="editDeploy" />
+
+        <button type="submit" class="btn-guardar">Guardar cambios</button>
+        <button type="button" class="btn-secundario" (click)="vista = 'proyectos'">Cancelar</button>
+      </form>
+    </div>
+
+    <!-- seccion: gestionar asesorías -->
     <div *ngIf="vista === 'asesorias'" class="seccion">
       <h3>Solicitudes de Asesoría</h3>
 
       <div *ngIf="asesorias.length === 0">No tienes solicitudes aún</div>
 
+      <!-- solicitudes cargadas desde Firestore -->
       <div class="tarjeta" *ngFor="let a of asesorias">
         <p><strong>Fecha:</strong> {{ a.fecha }}</p>
         <p><strong>Usuario:</strong> {{ a.nombre }}</p>
         <p><strong>Correo:</strong> {{ a.correo }}</p>
         <p><strong>Mensaje:</strong> {{ a.mensaje }}</p>
 
+        <!-- estado dinámico -->
         <p>
           <strong>Estado:</strong>
           <span [class]="a.estado">{{ a.estado }}</span>
         </p>
 
+        <!-- acciones dependiendo del estado -->
         <div class="acciones">
           <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'aprobado')">
-            Aprobar
+            ✔ Aprobar
           </button>
           <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'rechazado')">
-            Rechazar
+            ✖ Rechazar
           </button>
           <button *ngIf="a.estado === 'aprobado'" (click)="responder(a.id, 'realizado')">
-            Marcar como realizado
+            ✔ Marcar como realizado
+          </button>
+          <button
+            *ngIf="a.estado !== 'pendiente'"
+            class="eliminar-btn"
+            (click)="confirmarEliminarAsesoria(a.id)"
+          >
+            🗑 Eliminar
           </button>
         </div>
       </div>
     </div>
 
+    <!-- seccion: perfil programador -->
     <div *ngIf="vista === 'perfil'" class="perfil-container">
       <h2>Mi Perfil</h2>
 
+      <!-- foto editable con Firebase Storage -->
       <div class="foto-container">
         <img [src]="perfil.photo || 'assets/img/default-user.png'" class="foto-perfil" />
         <label class="btn-foto">
@@ -129,20 +194,16 @@
         </label>
       </div>
 
+      <!-- formulario de información personal -->
       <form (ngSubmit)="guardarPerfil()" class="formulario">
         <label>Nombre</label>
         <input type="text" [(ngModel)]="perfil.name" name="nombre" required />
 
         <label>Especialidad</label>
-        <input
-          type="text"
-          [(ngModel)]="perfil.specialty"
-          name="specialty"
-          placeholder="Ej: Angular, Backend, IA"
-        />
+        <input type="text" [(ngModel)]="perfil.specialty" name="specialty" />
 
         <label>Descripción</label>
-        <textarea [(ngModel)]="perfil.description" name="description" rows="4"></textarea>
+        <textarea [(ngModel)]="perfil.description" name="description"></textarea>
 
         <label>GitHub</label>
         <input type="text" [(ngModel)]="perfil.github" name="github" />
@@ -158,6 +219,27 @@
 
         <button type="submit" class="btn-guardar">Guardar cambios</button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- modal: mensajes -->
+<div class="overlay" *ngIf="mostrarModalMensaje">
+  <div class="confirm-modal animate">
+    <h2>Notificación</h2>
+    <p>{{ mensajeModal }}</p>
+    <button class="close-btn" (click)="mostrarModalMensaje = false">Cerrar</button>
+  </div>
+</div>
+
+<!-- modal: confirmaciones -->
+<div class="overlay" *ngIf="mostrarModalConfirmacion">
+  <div class="confirm-modal animate">
+    <h2>⚠ Confirmación</h2>
+    <p>{{ mensajeModal }}</p>
+    <div class="btn-row">
+      <button class="close-btn cancel" (click)="cancelarAccion()">Cancelar</button>
+      <button class="close-btn confirm" (click)="confirmarAccion()">Sí, continuar</button>
     </div>
   </div>
 </div>

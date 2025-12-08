@@ -1,10 +1,10 @@
 * {
-  font-family: "LemonMilk", sans-serif !important;
+  font-family: "LemonMilk", sans-serif !important; /* tipografía global */
 }
 
 .admin-banner {
   width: 100%;
-  background: linear-gradient(135deg, #6b47ff, #23134e);
+  background: linear-gradient(135deg, #6b47ff, #23134e); /* estilo del encabezado */
   padding: 70px 0;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .admin-canvas {
-  background: #0A0A14;
+  background: #0A0A14; /* fondo principal */
   min-height: 100vh;
   padding: 40px 0;
 }
@@ -37,7 +37,7 @@
 .admin-card {
   max-width: 1200px;
   margin: auto;
-  background: #121224;
+  background: #121224; /* tarjeta principal */
   padding: 45px;
   border-radius: 28px;
   border: 2px solid rgba(140, 80, 255, 0.2);
@@ -45,6 +45,7 @@
   color: white;
 }
 
+/* menú de navegación del dashboard */
 .menu-admin {
   display: flex;
   gap: 20px;
@@ -68,12 +69,14 @@
   background: rgba(255,255,255,0.2);
 }
 
+/* estado activo del botón seleccionado */
 .menu-admin .activo {
   background: linear-gradient(135deg, #6b4dff, #402bda);
   box-shadow: 0px 8px 25px rgba(102,67,255,0.5);
   color: white !important;
 }
 
+/* estilos generales de formularios */
 .seccion h2 {
   font-size: 26px;
   margin-bottom: 20px;
@@ -100,6 +103,7 @@ textarea::placeholder {
   color: rgba(255,255,255,0.45);
 }
 
+/* estilos de tarjetas con programadores */
 .tarjeta {
   background: #17172a;
   padding: 22px;
@@ -115,6 +119,7 @@ textarea::placeholder {
   box-shadow: 0px 10px 28px rgba(102,67,255,0.4);
 }
 
+/* estilos reutilizables de botones */
 button {
   border-radius: 14px;
   cursor: pointer;
@@ -148,6 +153,7 @@ button {
   background: rgba(255,255,255,0.22);
 }
 
+/* botones de acciones en lista */
 .btn-editar {
   background: #6b4dff;
   padding: 10px 18px;
@@ -164,6 +170,7 @@ button {
   box-shadow: 0px 5px 15px rgba(255,46,76,0.4);
 }
 
+/* item de horarios */
 .lista-horarios li {
   background: #1b1b31;
   padding: 18px 24px;
@@ -174,6 +181,7 @@ button {
   border: 1px solid rgba(255,255,255,0.2);
 }
 
+/* contenedor edición de horarios */
 .editar-container {
   margin-top: 30px;
   background: #191929;
@@ -184,10 +192,11 @@ button {
 
 @media(max-width:768px){
   .menu-admin {
-    flex-direction: column;
+    flex-direction: column; /* responsive del menú */
   }
 }
 
+/* ajustar botones centrados */
 .seccion form .btn-primary {
   width: fit-content;
   margin: 20px auto;
@@ -211,14 +220,175 @@ button {
   justify-content: flex-end;
 }
 
+/* responsividad de botones en items */
 .lista-horarios button:hover {
   transform: scale(1.07);
   box-shadow: 0 6px 18px rgba(255,255,255,0.12);
   transition: 0.25s ease;
 }
 
+/* contenedor general de acciones */
 .acciones {
   margin-top: 15px;
   display: flex;
   gap: 10px;
+}
+
+/* modal de mensajes */
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 10000;
+}
+
+.confirm-modal {
+  background: #1a1a1e;
+  padding: 30px;
+  width: 420px;
+  border-radius: 18px;
+  text-align: center;
+  border: 2px solid #6c4bff;
+  box-shadow: 0px 0px 20px rgba(108, 75, 255, 0.4);
+  animation: scaleIn .25s ease-out; /* animación modal */
+}
+
+.confirm-modal h2 {
+  font-family: 'Lemon/Milk', sans-serif;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.confirm-modal p {
+  color: #dcdcdc;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.close-btn {
+  background: #6c4bff;
+  border: none;
+  padding: 12px 25px;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Lemon/Milk', sans-serif;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  transform: scale(1.05);
+  background: #8b6aff;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.cancel {
+  background: #444;
+}
+
+.confirm {
+  background: #e91e63;
+}
+
+/* animación modal */
+@keyframes scaleIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* control de textos largos */
+.tarjeta p, .tarjeta span, .tarjeta div, .tarjeta {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+/* ajustes responsivos */
+@media (max-width: 768px) {
+
+  .banner-content h1 {
+    font-size: 34px;
+    line-height: 1.2;
+  }
+
+  .banner-content p {
+    font-size: 15px;
+  }
+
+  .admin-card,
+  .programador-card,
+  .seccion {
+    padding: 22px !important;
+    width: 92%;
+  }
+
+  .menu-admin,
+  .menu-interno {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .menu-admin button,
+  .menu-interno button {
+    width: 100%;
+    font-size: 15px;
+  }
+
+  .tarjeta {
+    padding: 18px;
+  }
+
+  .acciones {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .acciones button {
+    width: 100%;
+  }
+
+  input, textarea, select {
+    font-size: 15px;
+  }
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
+/* ajustes móviles para lista horarios */
+@media (max-width: 768px) {
+
+  .lista-horarios li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .lista-horarios .acciones {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .lista-horarios button {
+    width: 100% !important;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .tarjeta {
+    width: 100%;
+    margin: auto;
+  }
 }

@@ -9,24 +9,30 @@ import { adminGuard } from './core/guards/admin-guard';
 import { programadorGuard } from './core/guards/programador-guard';
 
 export const routes: Routes = [
+
+  // vista pública
   { path: '', component: HomeComponent, pathMatch: 'full' },
 
+  // vista pública
   { path: 'explorar', component: ExplorarComponent },
 
+  // ruta con parámetro dinámico
   { path: 'agendar-asesoria/:id', component: AgendarAsesoriaComponent },
 
+  // acceso solo para administradores
   {
     path: 'admin',
     component: DashboardComponent,
     canActivate: [authGuard, adminGuard]
   },
 
+  // acceso solo para programadores
   {
     path: 'programador',
     component: Portafolio,
     canActivate: [authGuard, programadorGuard]
   },
 
+  // ruta por defecto si la url no coincide
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
-

@@ -11,10 +11,13 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 
 bootstrapApplication(App, {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes), // registra las rutas de la app
 
+    // inicializa firebase usando la config del environment
     provideFirebaseApp(() => initializeApp(environment.firebase)),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
+
+    provideAuth(() => getAuth()), // habilita autenticación firebase
+    provideFirestore(() => getFirestore()), // habilita firestore (base de datos)
   ]
-}).catch(err => console.error(err));
+})
+.catch(err => console.error(err)); // muestra errores si el bootstrap falla

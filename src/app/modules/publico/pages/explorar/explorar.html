@@ -1,176 +1,208 @@
 <div class="explorar-wrapper">
-<section class="header-explorar">
-  <h1>PROGRAMADORES DISPONIBLES</h1>
-  <p class="sub">
-    SELECCIONA UN PROGRAMADOR PARA VER SU PERFIL, PORTAFOLIO Y SOLICITAR UNA ASESORÍA
-  </p>
-</section>
+  <!-- encabezado con título y subtítulo -->
+  <section class="header-explorar">
+    <h1>PROGRAMADORES DISPONIBLES</h1>
+    <p class="sub">
+      SELECCIONA UN PROGRAMADOR PARA VER SU PERFIL, PORTAFOLIO Y SOLICITAR UNA ASESORÍA
+    </p>
+  </section>
 
-<section class="explorar-container">
-  <div *ngIf="!programadores.length" class="loading">Cargando programadores...</div>
+  <!-- contenedor principal -->
+  <section class="explorar-container">
+    <!-- estado mientras carga lista -->
+    <div *ngIf="!programadores.length" class="loading">Cargando programadores...</div>
 
-  <div class="cards-container" *ngIf="programadores.length">
-    <div class="card" *ngFor="let p of programadores">
-      <img
-        [src]="p.photo || 'assets/img/default-user.png'"
-        alt="Foto de {{ p.name }}"
-        class="avatar"
-        referrerpolicy="no-referrer"
-      />
+    <!-- listado de programadores -->
+    <div class="cards-container" *ngIf="programadores.length">
+      <div class="card" *ngFor="let p of programadores">
+        <!-- foto de perfil del programador -->
+        <img
+          [src]="p.photo || 'assets/img/default-user.png'"
+          alt="Foto de {{ p.name }}"
+          class="avatar"
+          referrerpolicy="no-referrer"
+        />
 
-      <h3>{{ p.name }}</h3>
-      <p class="especialidad">{{ p.specialty || 'Programador' }}</p>
+        <!-- nombre y especialidad -->
+        <h3>{{ p.name }}</h3>
+        <p class="especialidad">{{ p.specialty || 'Programador' }}</p>
 
-      <div class="card-buttons">
-        <button class="btn-perfil" (click)="verPerfil(p)">Ver perfil</button>
-        <button class="btn-portafolio" (click)="verPortafolio(p)">Ver portafolio</button>
-        <button class="btn-agendar" (click)="seleccionarProgramador(p)">Agendar asesoría</button>
+        <!-- acciones disponibles -->
+        <div class="card-buttons">
+          <button class="btn-perfil" (click)="verPerfil(p)">Ver perfil</button>
+          <button class="btn-portafolio" (click)="verPortafolio(p)">Ver portafolio</button>
+          <button class="btn-agendar" (click)="seleccionarProgramador(p)">Agendar asesoría</button>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<div class="modal-backdrop" *ngIf="mostrarPerfil">
-  <div class="modal perfil-modal">
-    <img class="perfil-foto" [src]="perfilCompleto?.photo" referrerpolicy="no-referrer" />
-    <h2>{{ perfilCompleto?.name }}</h2>
-    <p class="correo">{{ perfilCompleto?.email }}</p>
+  <!-- modal para ver perfil del programador -->
+  <div class="modal-backdrop" *ngIf="mostrarPerfil">
+    <div class="modal perfil-modal">
+      <!-- foto de perfil -->
+      <img class="perfil-foto" [src]="perfilCompleto?.photo" referrerpolicy="no-referrer" />
 
-    <p class="especialidad-strong">
-      {{ perfilCompleto?.specialty }}
-    </p>
+      <h2>{{ perfilCompleto?.name }}</h2>
+      <p class="correo">{{ perfilCompleto?.email }}</p>
 
-    <p class="descripcion">
-      {{ perfilCompleto?.description || 'Este programador aún no ha agregado una descripción.' }}
-    </p>
+      <p class="especialidad-strong">
+        {{ perfilCompleto?.specialty }}
+      </p>
 
-    <hr />
+      <!-- descripción del programador -->
+      <p class="descripcion">
+        {{ perfilCompleto?.description || 'Este programador aún no ha agregado una descripción.' }}
+      </p>
 
-    <h3>Redes sociales</h3>
+      <hr />
 
-    <div class="redes">
-      <a
-        *ngIf="perfilCompleto?.github && perfilCompleto.github !== 'N/S'"
-        [href]="perfilCompleto.github"
-        target="_blank"
-        class="social github"
-      >
-        <i class="fa-brands fa-github"></i>
-      </a>
+      <h3>Redes sociales</h3>
 
-      <a
-        *ngIf="perfilCompleto?.instagram && perfilCompleto.instagram !== 'N/S'"
-        [href]="perfilCompleto.instagram"
-        target="_blank"
-        class="social instagram"
-      >
-        <i class="fa-brands fa-instagram"></i>
-      </a>
+      <!-- render dinámico de links solo si existen -->
+      <div class="redes">
+        <a
+          *ngIf="perfilCompleto?.github && perfilCompleto.github !== 'N/S'"
+          [href]="perfilCompleto.github"
+          target="_blank"
+          class="social github"
+        >
+          <i class="fa-brands fa-github"></i>
+        </a>
 
-      <a
-        *ngIf="perfilCompleto?.linkedin && perfilCompleto.linkedin !== 'N/S'"
-        [href]="perfilCompleto.linkedin"
-        target="_blank"
-        class="social linkedin"
-      >
-        <i class="fa-brands fa-linkedin"></i>
-      </a>
+        <a
+          *ngIf="perfilCompleto?.instagram && perfilCompleto.instagram !== 'N/S'"
+          [href]="perfilCompleto.instagram"
+          target="_blank"
+          class="social instagram"
+        >
+          <i class="fa-brands fa-instagram"></i>
+        </a>
 
-      <a
-        *ngIf="perfilCompleto?.website && perfilCompleto.website !== 'N/S'"
-        [href]="perfilCompleto.website"
-        target="_blank"
-        class="social website"
-      >
-        <i class="fa-solid fa-globe"></i>
-      </a>
+        <a
+          *ngIf="perfilCompleto?.linkedin && perfilCompleto.linkedin !== 'N/S'"
+          [href]="perfilCompleto.linkedin"
+          target="_blank"
+          class="social linkedin"
+        >
+          <i class="fa-brands fa-linkedin"></i>
+        </a>
+
+        <a
+          *ngIf="perfilCompleto?.website && perfilCompleto.website !== 'N/S'"
+          [href]="perfilCompleto.website"
+          target="_blank"
+          class="social website"
+        >
+          <i class="fa-solid fa-globe"></i>
+        </a>
+      </div>
+
+      <button class="btn-cerrar" (click)="cerrarPerfil()">Cerrar</button>
     </div>
-
-    <button class="btn-cerrar" (click)="cerrarPerfil()">Cerrar</button>
   </div>
-</div>
 
-<div class="modal-backdrop" *ngIf="mostrarModal">
-  <div class="modal-asesoria">
-    <h2 class="modal-title">Agendar asesoría con {{ programadorSeleccionado?.name }}</h2>
+  <!-- modal para agendar asesoría -->
+  <div class="modal-backdrop" *ngIf="mostrarModal">
+    <div class="modal-asesoria">
+      <h2 class="modal-title">Agendar asesoría con {{ programadorSeleccionado?.name }}</h2>
 
-    <form (ngSubmit)="agendarAsesoria()" class="form-modal">
-      <div class="form-group">
-        <label>Nombre</label>
-        <input type="text" [(ngModel)]="asesoria.nombre" name="nombre" required />
-      </div>
-
-      <div class="form-group">
-        <label>Correo</label>
-        <input type="email" [(ngModel)]="asesoria.correo" name="correo" required />
-      </div>
-
-      <div class="form-row">
+      <form (ngSubmit)="agendarAsesoria()" class="form-modal">
+        <!-- datos personales -->
         <div class="form-group">
-          <label>Fecha deseada</label>
-          <input
-            type="date"
-            [(ngModel)]="asesoria.fecha"
-            name="fecha"
-            required
-            (change)="generarHorasDisponibles()"
-          />
+          <label>Nombre</label>
+          <input type="text" [(ngModel)]="asesoria.nombre" name="nombre" required />
         </div>
 
         <div class="form-group">
-          <label>Hora</label>
-          <input
-            type="time"
-            [(ngModel)]="asesoria.hora"
-            name="hora"
-            required
-            class="input-hora"
-            (change)="validarHora()"
-          />
+          <label>Correo</label>
+          <input type="email" [(ngModel)]="asesoria.correo" name="correo" required />
+        </div>
 
-          <div *ngIf="mensajeHora" class="error-hora">
-            {{ mensajeHora }}
+        <!-- fecha y hora -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha deseada</label>
+            <input
+              type="date"
+              [(ngModel)]="asesoria.fecha"
+              name="fecha"
+              required
+              (change)="generarHorasDisponibles()"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Hora</label>
+            <input
+              type="time"
+              [(ngModel)]="asesoria.hora"
+              name="hora"
+              required
+              class="input-hora"
+              (change)="validarHora()"
+            />
+
+            <!-- validación dinámica -->
+            <div *ngIf="mensajeHora" class="error-hora">
+              {{ mensajeHora }}
+            </div>
+          </div>
+        </div>
+
+        <!-- mensaje opcional -->
+        <div class="form-group">
+          <label>Mensaje</label>
+          <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>
+        </div>
+
+        <!-- acciones del modal -->
+        <div class="modal-actions">
+          <button type="button" class="btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-enviar">Solicitar asesoría</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- modal para ver portafolio -->
+  <div class="modal-backdrop" *ngIf="mostrarPortafolio">
+    <div class="modal portafolio-modal">
+      <h2>PORTAFOLIO DE {{ programadorSeleccionado?.name }}</h2>
+
+      <!-- mensaje si no hay proyectos -->
+      <div *ngIf="proyectos.length === 0" class="no-projects">
+        Este programador aún no tiene proyectos subidos.
+      </div>
+
+      <!-- listado de proyectos -->
+      <div *ngIf="proyectos.length > 0" class="projects-list">
+        <div class="project-card" *ngFor="let pr of proyectos">
+          <h3>{{ pr.nombre }}</h3>
+          <p class="desc">{{ pr.descripcion }}</p>
+          <p><strong>Tecnologías:</strong> {{ pr.tecnologias }}</p>
+          <p><strong>Participación:</strong> {{ pr.participacion }}</p>
+
+          <div class="links">
+            <a *ngIf="pr.repositorio !== 'N/T'" [href]="pr.repositorio" target="_blank"
+              >Repositorio</a
+            >
+            <a *ngIf="pr.deploy !== 'N/T'" [href]="pr.deploy" target="_blank">Deploy</a>
           </div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Mensaje</label>
-        <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-cancelar" (click)="cerrarModal()">Cancelar</button>
-        <button type="submit" class="btn-enviar">Solicitar asesoría</button>
-      </div>
-    </form>
+      <button class="btn-cerrar" (click)="cerrarPortafolio()">Cerrar</button>
+    </div>
   </div>
-</div>
 
-<div class="modal-backdrop" *ngIf="mostrarPortafolio">
-  <div class="modal portafolio-modal">
-    <h2>PORTAFOLIO DE {{ programadorSeleccionado?.name }}</h2>
+  <!-- confirmación visual después de enviar asesoría -->
+  <div class="overlay" *ngIf="mostrarConfirmacion">
+    <div class="confirm-modal animate">
+      <h2>✔ ¡Solicitud enviada!</h2>
+      <p>{{ mensajeConfirmacion }}</p>
 
-    <div *ngIf="proyectos.length === 0" class="no-projects">
-      Este programador aún no tiene proyectos subidos.
+      <button class="close-btn" (click)="mostrarConfirmacion = false">Cerrar</button>
     </div>
-
-    <div *ngIf="proyectos.length > 0" class="projects-list">
-      <div class="project-card" *ngFor="let pr of proyectos">
-        <h3>{{ pr.nombre }}</h3>
-        <p class="desc">{{ pr.descripcion }}</p>
-        <p><strong>Tecnologías:</strong> {{ pr.tecnologias }}</p>
-        <p><strong>Participación:</strong> {{ pr.participacion }}</p>
-
-        <div class="links">
-          <a *ngIf="pr.repositorio !== 'N/T'" [href]="pr.repositorio" target="_blank"
-            >Repositorio</a
-          >
-          <a *ngIf="pr.deploy !== 'N/T'" [href]="pr.deploy" target="_blank">Deploy</a>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-cerrar" (click)="cerrarPortafolio()">Cerrar</button>
   </div>
 </div>

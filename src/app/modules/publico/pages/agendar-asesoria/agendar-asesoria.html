@@ -1,29 +1,37 @@
 <h2>Agendar asesoría</h2>
 
 <form (ngSubmit)="agendar()">
+  <!-- campo nombre -->
   <label>Nombre</label>
   <input type="text" [(ngModel)]="asesoria.nombre" name="nombre" required />
 
+  <!-- correo del solicitante -->
   <label>Correo</label>
   <input type="email" [(ngModel)]="asesoria.correo" name="correo" required />
 
   <label>Fecha deseada</label>
   <input type="date" name="fecha" [(ngModel)]="asesoria.fecha" (change)="onFechaChange($event)" />
 
+  <!-- selección de hora disponible -->
   <label>Hora</label>
 
+  <!-- solo se muestra si existen horarios disponibles -->
   <select *ngIf="!sinDisponibilidad" [(ngModel)]="asesoria.hora" name="hora" required>
     <option value="" disabled selected>Selecciona una hora</option>
+
     <option *ngFor="let h of horasDisponibles" [value]="h">{{ h }}</option>
   </select>
 
+  <!-- mensaje de error si el programador no trabaja ese día -->
   <p *ngIf="sinDisponibilidad" style="color: red; font-weight: bold">
     El programador no tiene disponibilidad ese día.
   </p>
 
+  <!-- mensaje opcional del usuario -->
   <label>Mensaje</label>
   <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>
 
+  <!-- botón bloqueado si falta fecha u hora o no hay disponibilidad -->
   <button type="submit" [disabled]="sinDisponibilidad || !asesoria.fecha || !asesoria.hora">
     Solicitar asesoría
   </button>

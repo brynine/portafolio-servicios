@@ -2,35 +2,20 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 
-export const adminGuard: CanActivateFn = () => {
+export const adminGuard: CanActivateFn = async () => {
 
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.currentUserData) {
-    if (auth.currentUserData.role === 'admin') {
-      return true;
-    } else {
-      router.navigateByUrl('/');
-      return false;
-    }
+  // espera a que firebase determine sesión y rol
+  await auth.authReady;
+
+  // permite acceso solo si el usuario es admin
+  if (auth.currentUserData?.role === 'admin') {
+    return true;
   }
 
-  return new Promise<boolean>((resolve) => {
-
-    const unsubscribe = auth.onUserDataChange((userData) => {
-
-      if (!userData) {
-        router.navigateByUrl('/');
-        resolve(false);
-      } else if (userData.role === 'admin') {
-        resolve(true);
-      } else {
-        router.navigateByUrl('/');
-        resolve(false);
-      }
-    });
-
-  });
+  // si no es admin redirige y bloquea acceso
+  router.navigateByUrl('/');
+  return false;
 };
-    

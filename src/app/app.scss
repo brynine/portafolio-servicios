@@ -286,3 +286,24 @@
 .layout-container {
   min-height: 100vh;
 }
+
+.menu-user button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: "LemonMilk", sans-serif;
+  transition: 0.25s;
+}
+
+.menu-user button:hover {
+  background: rgba(255,255,255,0.07);
+  transform: scale(1.03);
+}
+
+.menu-user button.logout {
+  color: #ff2e40;
+}

@@ -1,4 +1,5 @@
 <div class="admin-banner">
+  <!-- encabezado visual del panel -->
   <div class="banner-content">
     <h1>PANEL DE ADMINISTRACIÓN</h1>
     <p>GESTIÓN DE PROGRAMADORES Y DISPONIBILIDAD</p>
@@ -7,6 +8,7 @@
 
 <div class="admin-canvas">
   <div class="admin-card">
+    <!-- menú para cambiar entre las vistas -->
     <div class="menu-admin">
       <button (click)="vista = 'crear'" [class.activo]="vista === 'crear'">
         ➕ Crear Programador
@@ -17,9 +19,11 @@
       </button>
     </div>
 
+    <!-- vista: registrar nuevo programador -->
     <div *ngIf="vista === 'crear'" class="seccion">
       <h2>Registrar Nuevo Programador</h2>
 
+      <!-- formulario vinculado con ngModel -->
       <form (ngSubmit)="crearProgramador()">
         <label>Nombre completo</label>
         <input type="text" [(ngModel)]="nuevoProgramador.name" name="name" required />
@@ -34,21 +38,25 @@
       </form>
     </div>
 
+    <!-- vista: lista de programadores -->
     <div *ngIf="vista === 'lista'" class="seccion">
       <h2>Programadores Registrados</h2>
 
+      <!-- recorrido dinámico de programadores -->
       <div *ngFor="let p of programadores" class="tarjeta">
         <h3>{{ p.name }}</h3>
         <p><strong>Email:</strong> {{ p.email }}</p>
         <p><strong>Especialidad:</strong> {{ p.specialty }}</p>
 
+        <!-- botones para editar o eliminar -->
         <div class="acciones">
           <button class="btn-editar" (click)="editarProgramador(p)">Editar</button>
-          <button class="btn-eliminar" (click)="eliminarProgramador(p.uid)">Eliminar</button>
+          <button class="btn-eliminar" (click)="eliminarProgramador(p.id)">Eliminar</button>
         </div>
       </div>
     </div>
 
+    <!-- vista: edición -->
     <div *ngIf="vista === 'editar'" class="seccion">
       <h2>Editar Programador</h2>
 
@@ -72,9 +80,11 @@
       </form>
     </div>
 
+    <!-- vista: horarios -->
     <div *ngIf="vista === 'horarios'" class="seccion">
       <h2>Horarios de Disponibilidad</h2>
 
+      <!-- selector del programador -->
       <label>Seleccionar Programador</label>
       <select [(ngModel)]="programadorSeleccionado" (change)="cambiarProgramador()" class="select">
         <option [ngValue]="null">-- Seleccionar programador --</option>
@@ -83,9 +93,11 @@
         </option>
       </select>
 
+      <!-- cuando hay programador seleccionado se muestran horarios -->
       <div *ngIf="programadorSeleccionado" class="horarios">
         <h3>Horario de {{ programadorSeleccionado.name }}</h3>
 
+        <!-- formulario para agregar horarios -->
         <label>Día</label>
         <select [(ngModel)]="nuevoHorario.dia" name="dia">
           <option>Lunes</option>
@@ -110,11 +122,13 @@
 
         <button class="btn-primary" (click)="guardarHorario()">Agregar horario</button>
 
+        <!-- listado de horarios existentes -->
         <h3>Horarios Registrados</h3>
         <ul class="lista-horarios">
           <li *ngFor="let h of horariosProgramador">
             {{ h.dia }} — {{ h.horaInicio }} a {{ h.horaFin }}
 
+            <!-- opciones: editar o eliminar -->
             <div class="acciones">
               <button class="btn-editar" (click)="editarHorario(h)">Editar</button>
               <button class="btn-eliminar" (click)="eliminarHorario(h.id)">Eliminar</button>
@@ -124,6 +138,7 @@
       </div>
     </div>
 
+    <!-- sección de edición del horario -->
     <div *ngIf="modoEditarHorario" class="editar-container">
       <h3>Editando Horario</h3>
 
@@ -145,6 +160,29 @@
 
       <button class="btn-primary" (click)="actualizarHorario()">Guardar</button>
       <button class="btn-secundario" (click)="cancelarEdicionHorario()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal simple para mensajes -->
+<div class="overlay" *ngIf="mostrarModalMensaje">
+  <div class="confirm-modal animate">
+    <h2>Notificación</h2>
+    <p>{{ mensajeModal }}</p>
+
+    <button class="close-btn" (click)="mostrarModalMensaje = false">Cerrar</button>
+  </div>
+</div>
+
+<!-- modal para confirmaciones -->
+<div class="overlay" *ngIf="mostrarModalConfirmacion">
+  <div class="confirm-modal animate">
+    <h2>⚠ Confirmación</h2>
+    <p>{{ mensajeModal }}</p>
+
+    <div class="btn-row">
+      <button class="close-btn cancel" (click)="cancelarAccion()">Cancelar</button>
+      <button class="close-btn confirm" (click)="confirmarAccion()">Sí, continuar</button>
     </div>
   </div>
 </div>

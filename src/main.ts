@@ -20,4 +20,4 @@ bootstrapApplication(App, {
     provideFirestore(() => getFirestore()), // habilita firestore (base de datos)
   ]
 })
-.catch(err => console.error(err)); // muestra errores si el bootstrap falla
+.catch(err => console.error(err));

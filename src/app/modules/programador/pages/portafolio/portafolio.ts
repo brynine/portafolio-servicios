@@ -85,7 +85,7 @@ export class Portafolio implements OnInit, OnDestroy {
 
     // escucha cambios de usuario (logout o cambio de cuenta)
     this.auth.onUserDataChange(async (user) => {
-      console.log("🔄 Usuario cambió:", user);
+      console.log(" Usuario cambió:", user);
       await this.refrescarPantalla();
     });
   }

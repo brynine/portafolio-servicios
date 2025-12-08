@@ -55,7 +55,7 @@ export class App {
         return;
       }
 
-      console.log("🔄 Cambio detectado - Nuevo Rol:", userData.role);
+      console.log("Cambio detectado - Nuevo Rol:", userData.role);
 
       // evita redirecciones repetidas
       if (this.redirigido) return;

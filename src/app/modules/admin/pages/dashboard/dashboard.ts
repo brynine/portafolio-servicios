@@ -143,7 +143,6 @@ export class DashboardComponent implements OnInit {
   async guardarHorario() {
     if (!this.programadorSeleccionado) return;
 
-    // validaciones
     if (!this.nuevoHorario.horaInicio || !this.nuevoHorario.horaFin) {
       this.mostrarMensaje('Debe seleccionar hora inicio y hora fin.');
       return;

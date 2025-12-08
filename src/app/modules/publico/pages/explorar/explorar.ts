@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { EmailService } from '../../../../core/services/email.service'; // servicio para enviar correos
+import { EmailService } from '../../../../core/services/email.service';
 
 import {
   Firestore,
@@ -25,7 +25,7 @@ import {
 
 export class ExplorarComponent implements OnInit {
 
-  private firestore = inject(Firestore); // inyección directa de firestore
+  private firestore = inject(Firestore); 
 
   constructor(
     private emailService: EmailService  // servicio para enviar correos
@@ -89,30 +89,25 @@ export class ExplorarComponent implements OnInit {
   }
 
   async seleccionarProgramador(p: any) {
-    this.programadorSeleccionado = p;  
+  this.programadorSeleccionado = p;
 
-    // obtiene UID real del programador desde firestore
-    const ref = doc(this.firestore, 'users', p.id);
-    const snap = await getDoc(ref);
+  // ✔ El UID correcto para horarios es el id del documento
+  const programadorUID = p.id;
 
-    if (snap.exists()) {
-      const data = snap.data();
-      this.programadorSeleccionado.uid = data['uid'];
-    }
+  console.log("UID usado para horarios:", programadorUID);
 
-    console.log("UID real del programador:", this.programadorSeleccionado.uid);
+  // consulta horarios disponibles del programador
+  const horariosRef = collection(this.firestore, 'horarios');
+  const q = query(horariosRef, where('uid', '==', programadorUID));
 
-    // consulta horarios disponibles del programador
-    const horariosRef = collection(this.firestore, 'horarios');
-    const q = query(horariosRef, where('uid', '==', this.programadorSeleccionado.uid));
+  collectionData(q, { idField: 'id' }).subscribe(h => {
+    this.horariosProgramador = h;
+    console.log("Horarios cargados:", h);
+  });
 
-    collectionData(q).subscribe(h => {
-      this.horariosProgramador = h;
-      console.log("Horarios:", h);
-    });
+  this.mostrarModal = true;
+}
 
-    this.mostrarModal = true; // abre modal de agendar asesoría
-  }
 
   cerrarModal() {
     this.mostrarModal = false;

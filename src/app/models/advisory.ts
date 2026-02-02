@@ -2,11 +2,17 @@ import { User } from './user';
 import { Project } from './project';
 
 export interface Advisory {
-  id: string;
-  tema: string;
-  descripcion: string;
+  id?: string;
+  mensaje: string;
   fecha: string;
+  hora: string;
   estado: string;
-  user: User;
-  project: Project;
+  correoCliente: string;
+  user: {
+    id: string;
+  };
+  project?: {
+    id: string;
+  } | null;
 }
+

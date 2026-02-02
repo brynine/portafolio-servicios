@@ -9,6 +9,8 @@ import { AvailabilityService } from '../../../../core/services/availability.serv
 import { User } from '../../../../models/user';
 import { Availability } from '../../../../models/availability';
 import { ProjectService } from '../../../../core/services/project.service';
+import { AdvisoryService } from '../../../../core/services/advisory.service';
+
 
 
 @Component({
@@ -25,7 +27,8 @@ constructor(
   private userService: UserService,
   private availabilityService: AvailabilityService,
   private emailService: EmailService,
-  private projectService: ProjectService
+  private projectService: ProjectService,
+  private advisoryService: AdvisoryService
 
 ) {}
 
@@ -140,42 +143,61 @@ cerrarPortafolio() {
   this.proyectos = [];
 }
 
-async agendarAsesoria() {
+agendarAsesoria() {
 
-  if (!this.asesoria.hora || !this.asesoria.fecha) {
+  if (!this.asesoria.fecha || !this.asesoria.hora) {
     alert('Debe seleccionar fecha y hora');
     return;
   }
 
-  // 📧 correo al programador
-  this.emailService.enviarCorreoProgramador({
-    to_name: this.programadorSeleccionado.nombre,
-    cliente: this.asesoria.nombre,
-    correo: this.asesoria.correo,
+  const advisory = {
+    mensaje: this.asesoria.mensaje,
     fecha: this.asesoria.fecha,
     hora: this.asesoria.hora,
-    mensaje: this.asesoria.mensaje,
-    correo_destino: this.programadorSeleccionado.email
-  });
+    estado: 'PENDIENTE',
+    correoCliente: this.asesoria.correo,
+    user: {
+      id: this.programadorSeleccionado.id   // 👈 usuario programador
+    },
+    project: null // o { id: 'P1' } si luego lo manejas
+  };
 
-  // 📧 copia al usuario
-  this.emailService.enviarCorreoUsuario({
-    cliente: this.asesoria.nombre,
-    correo: this.asesoria.correo,
-    fecha: this.asesoria.fecha,
-    hora: this.asesoria.hora,
-    mensaje: this.asesoria.mensaje,
-    correo_destino: this.asesoria.correo
-  });
+  this.advisoryService.create(advisory).subscribe({
+    next: () => {
 
-  // UI
-  this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '' };
-  this.mostrarModal = false;
-  this.mostrarConfirmacion = true;
-  this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';
+      // 📧 correo al programador
+      this.emailService.enviarCorreoProgramador({
+        to_name: this.programadorSeleccionado.nombre,
+        cliente: this.asesoria.nombre,
+        correo: this.asesoria.correo,
+        fecha: this.asesoria.fecha,
+        hora: this.asesoria.hora,
+        mensaje: this.asesoria.mensaje,
+        correo_destino: this.programadorSeleccionado.email
+      });
+
+      // 📧 copia al usuario
+      this.emailService.enviarCorreoUsuario({
+        cliente: this.asesoria.nombre,
+        correo: this.asesoria.correo,
+        fecha: this.asesoria.fecha,
+        hora: this.asesoria.hora,
+        mensaje: this.asesoria.mensaje,
+        correo_destino: this.asesoria.correo
+      });
+
+      // UI
+      this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '' };
+      this.mostrarModal = false;
+      this.mostrarConfirmacion = true;
+      this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';
+    },
+    error: (err) => {
+      console.error(err);
+      alert('Error al registrar la asesoría');
+    }
+  });
 }
-
-
 
   // método completo para guardar asesoría y enviar correos
   /*async agendarAsesoria() {
@@ -199,7 +221,7 @@ async agendarAsesoria() {
       programadorId: this.programadorSeleccionado.uid,
       estado: 'pendiente',
       creadaEn: new Date()
-    });*/
+    });
 
     // envío de correo al programador
     /*console.log("Enviando correo al programador:", this.programadorSeleccionado.email);

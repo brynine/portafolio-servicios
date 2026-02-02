@@ -1,5 +1,4 @@
 <div class="admin-banner">
-  <!-- encabezado visual del panel -->
   <div class="banner-content">
     <h1>PANEL DE ADMINISTRACIÓN</h1>
     <p>GESTIÓN DE PROGRAMADORES Y DISPONIBILIDAD</p>
@@ -8,22 +7,23 @@
 
 <div class="admin-canvas">
   <div class="admin-card">
-    <!-- menú para cambiar entre las vistas -->
+    <!-- menú -->
     <div class="menu-admin">
       <button (click)="vista = 'crear'" [class.activo]="vista === 'crear'">
         ➕ Crear Programador
       </button>
+
       <button (click)="vista = 'lista'" [class.activo]="vista === 'lista'">📋 Programadores</button>
+
       <button (click)="vista = 'horarios'" [class.activo]="vista === 'horarios'">
         🕒 Horarios
       </button>
     </div>
 
-    <!-- vista: registrar nuevo programador -->
+    <!-- CREAR -->
     <div *ngIf="vista === 'crear'" class="seccion">
       <h2>Registrar Nuevo Programador</h2>
 
-      <!-- formulario vinculado con ngModel -->
       <form (ngSubmit)="crearProgramador()">
         <label>Nombre completo</label>
         <input type="text" [(ngModel)]="nuevoProgramador.name" name="name" required />
@@ -38,17 +38,16 @@
       </form>
     </div>
 
-    <!-- vista: lista de programadores -->
+    <!-- LISTA -->
     <div *ngIf="vista === 'lista'" class="seccion">
       <h2>Programadores Registrados</h2>
 
-      <!-- recorrido dinámico de programadores -->
       <div *ngFor="let p of programadores" class="tarjeta">
-        <h3>{{ p.name }}</h3>
+        <!-- 🔑 USAR NOMBRES DEL BACKEND -->
+        <h3>{{ p.nombre }}</h3>
         <p><strong>Email:</strong> {{ p.email }}</p>
-        <p><strong>Especialidad:</strong> {{ p.specialty }}</p>
+        <p><strong>Especialidad:</strong> {{ p.especialidad || 'Sin especialidad' }}</p>
 
-        <!-- botones para editar o eliminar -->
         <div class="acciones">
           <button class="btn-editar" (click)="editarProgramador(p)">Editar</button>
           <button class="btn-eliminar" (click)="eliminarProgramador(p.id)">Eliminar</button>
@@ -56,13 +55,14 @@
       </div>
     </div>
 
-    <!-- vista: edición -->
+    <!-- EDITAR -->
     <div *ngIf="vista === 'editar'" class="seccion">
       <h2>Editar Programador</h2>
 
       <form (ngSubmit)="actualizarProgramador()">
         <label>Nombre</label>
-        <input type="text" [(ngModel)]="programadorEditando.name" name="editName" required />
+        <!-- 🔑 BACKEND -->
+        <input type="text" [(ngModel)]="programadorEditando.nombre" name="editNombre" required />
 
         <label>Correo</label>
         <input type="email" [(ngModel)]="programadorEditando.email" name="editEmail" required />
@@ -70,8 +70,8 @@
         <label>Especialidad</label>
         <input
           type="text"
-          [(ngModel)]="programadorEditando.specialty"
-          name="editSpecialty"
+          [(ngModel)]="programadorEditando.especialidad"
+          name="editEspecialidad"
           required
         />
 
@@ -80,24 +80,21 @@
       </form>
     </div>
 
-    <!-- vista: horarios -->
+    <!-- HORARIOS -->
     <div *ngIf="vista === 'horarios'" class="seccion">
       <h2>Horarios de Disponibilidad</h2>
 
-      <!-- selector del programador -->
       <label>Seleccionar Programador</label>
       <select [(ngModel)]="programadorSeleccionado" (change)="cambiarProgramador()" class="select">
         <option [ngValue]="null">-- Seleccionar programador --</option>
         <option *ngFor="let p of programadores" [ngValue]="p">
-          {{ p.name }}
+          {{ p.nombre }}
         </option>
       </select>
 
-      <!-- cuando hay programador seleccionado se muestran horarios -->
       <div *ngIf="programadorSeleccionado" class="horarios">
-        <h3>Horario de {{ programadorSeleccionado.name }}</h3>
+        <h3>Horario de {{ programadorSeleccionado.nombre }}</h3>
 
-        <!-- formulario para agregar horarios -->
         <label>Día</label>
         <select [(ngModel)]="nuevoHorario.dia" name="dia">
           <option>Lunes</option>
@@ -108,13 +105,13 @@
           <option>Sábado</option>
         </select>
 
-        <div class="grid-2 horarios-grid">
-          <div class="horario-item">
+        <div class="grid-2">
+          <div>
             <label>Hora Inicio</label>
             <input type="time" [(ngModel)]="nuevoHorario.horaInicio" name="inicio" />
           </div>
 
-          <div class="horario-item">
+          <div>
             <label>Hora Fin</label>
             <input type="time" [(ngModel)]="nuevoHorario.horaFin" name="fin" />
           </div>
@@ -122,59 +119,34 @@
 
         <button class="btn-primary" (click)="guardarHorario()">Agregar horario</button>
 
-        <!-- listado de horarios existentes -->
         <h3>Horarios Registrados</h3>
         <ul class="lista-horarios">
           <li *ngFor="let h of horariosProgramador">
             {{ h.dia }} — {{ h.horaInicio }} a {{ h.horaFin }}
 
-            <!-- opciones: editar o eliminar -->
             <div class="acciones">
               <button class="btn-editar" (click)="editarHorario(h)">Editar</button>
-              <button class="btn-eliminar" (click)="eliminarHorario(h.id)">Eliminar</button>
+              <button class="btn-eliminar" (click)="eliminarHorarioConfirmado(h.id)">
+                Eliminar
+              </button>
             </div>
           </li>
         </ul>
       </div>
     </div>
-
-    <!-- sección de edición del horario -->
-    <div *ngIf="modoEditarHorario" class="editar-container">
-      <h3>Editando Horario</h3>
-
-      <label>Día</label>
-      <select [(ngModel)]="horarioEditando.dia">
-        <option>Lunes</option>
-        <option>Martes</option>
-        <option>Miércoles</option>
-        <option>Jueves</option>
-        <option>Viernes</option>
-        <option>Sábado</option>
-      </select>
-
-      <label>Hora Inicio</label>
-      <input type="time" [(ngModel)]="horarioEditando.horaInicio" />
-
-      <label>Hora Fin</label>
-      <input type="time" [(ngModel)]="horarioEditando.horaFin" />
-
-      <button class="btn-primary" (click)="actualizarHorario()">Guardar</button>
-      <button class="btn-secundario" (click)="cancelarEdicionHorario()">Cancelar</button>
-    </div>
   </div>
 </div>
 
-<!-- modal simple para mensajes -->
+<!-- MODAL MENSAJE -->
 <div class="overlay" *ngIf="mostrarModalMensaje">
   <div class="confirm-modal animate">
     <h2>Notificación</h2>
     <p>{{ mensajeModal }}</p>
-
     <button class="close-btn" (click)="mostrarModalMensaje = false">Cerrar</button>
   </div>
 </div>
 
-<!-- modal para confirmaciones -->
+<!-- MODAL CONFIRMACIÓN -->
 <div class="overlay" *ngIf="mostrarModalConfirmacion">
   <div class="confirm-modal animate">
     <h2>⚠ Confirmación</h2>

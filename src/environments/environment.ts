@@ -8,5 +8,7 @@ export const environment = {
     storageBucket: "portafolio-servicios-284b6.appspot.com",
     messagingSenderId: "45779466262",
     appId: "1:45779466262:web:83495240dcccae93b09d37"
-  }
+  },
+
+  apiBaseUrl: 'http://localhost:8080/gproyecto/api'
 };

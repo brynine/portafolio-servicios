@@ -1,38 +1,63 @@
 import { Routes } from '@angular/router';
+
+// público
 import { HomeComponent } from './modules/publico/pages/home/home';
-import { DashboardComponent } from './modules/admin/pages/dashboard/dashboard';
-import { Portafolio } from './modules/programador/pages/portafolio/portafolio';
 import { ExplorarComponent } from './modules/publico/pages/explorar/explorar';
 import { AgendarAsesoriaComponent } from './modules/publico/pages/agendar-asesoria/agendar-asesoria';
-import { authGuard } from './core/guards/auth-guard';
-import { adminGuard } from './core/guards/admin-guard';
-import { programadorGuard } from './core/guards/programador-guard';
+
+// admin
+import { DashboardComponent } from './modules/admin/pages/dashboard/dashboard';
+import { NotificationsComponent } from './modules/admin/pages/notifications/notifications.component';
+
+// programador
+import { Portafolio } from './modules/programador/pages/portafolio/portafolio';
 
 export const routes: Routes = [
 
-  // vista pública
-  { path: '', component: HomeComponent, pathMatch: 'full' },
+  // ===== RUTAS PÚBLICAS =====
+  {
+    path: '',
+    component: HomeComponent
+  },
+  {
+    path: 'explorar',
+    component: ExplorarComponent
+  },
+  {
+    path: 'agendar-asesoria/:id',
+    component: AgendarAsesoriaComponent
+  },
 
-  // vista pública
-  { path: 'explorar', component: ExplorarComponent },
-
-  // ruta con parámetro dinámico
-  { path: 'agendar-asesoria/:id', component: AgendarAsesoriaComponent },
-
-  // acceso solo para administradores
+  // ===== ADMIN =====
   {
     path: 'admin',
-    component: DashboardComponent,
-    canActivate: [authGuard, adminGuard]
+    component: DashboardComponent, // ⬅️ CONTENEDOR
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      },
+      {
+        path: 'dashboard',
+        component: DashboardComponent
+      },
+      {
+        path: 'notifications',
+        component: NotificationsComponent
+      }
+    ]
   },
 
-  // acceso solo para programadores
+  // ===== PROGRAMADOR =====
   {
     path: 'programador',
-    component: Portafolio,
-    canActivate: [authGuard, programadorGuard]
+    component: Portafolio
   },
 
-  // ruta por defecto si la url no coincide
-  { path: '**', redirectTo: '', pathMatch: 'full' }
+  // ===== FALLBACK =====
+  {
+    path: '**',
+    redirectTo: ''
+  }
 ];

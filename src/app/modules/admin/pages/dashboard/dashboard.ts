@@ -1,18 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where
-} from 'firebase/firestore';
+import { RouterModule } from '@angular/router';
+import { UserService } from '../../../../core/services/user.service';
+import { User } from '../../../../models/user';
+import { AvailabilityService } from '../../../../core/services/availability.service';
+import { Availability } from '../../../../models/availability';
 
 import { environment } from '../../../../../environments/environment';
 import { initializeApp } from 'firebase/app';
@@ -20,19 +13,20 @@ import { initializeApp } from 'firebase/app';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
 export class DashboardComponent implements OnInit {
 
-  // conexión a Firebase
-  db = getFirestore(initializeApp(environment.firebase));
 
   // controla qué vista se muestra (crear, editar o lista)
-  vista: string = 'crear';
+  vista: string = 'lista';
 
-  programadores: any[] = [];
+  programadores: User[] = [];
+
+  constructor(private userService: UserService, 
+  private availabilityService: AvailabilityService) {}
 
   nuevoProgramador = {
     name: '',
@@ -64,40 +58,33 @@ export class DashboardComponent implements OnInit {
   }
 
   // crea un nuevo programador
-  async crearProgramador() {
-    const data = {
-      name: this.nuevoProgramador.name,
-      email: this.nuevoProgramador.email,
-      specialty: this.nuevoProgramador.specialty,
-      role: 'programador' 
-    };
+  crearProgramador() {
+  this.userService.crearProgramador({
+    email: this.nuevoProgramador.email,
+    nombre: this.nuevoProgramador.name,
+    especialidad: this.nuevoProgramador.specialty
+  }).subscribe({
+    next: () => {
+      this.mostrarMensaje('Programador creado correctamente');
+      this.nuevoProgramador = { name: '', email: '', specialty: '' };
+      this.cargarProgramadores();
+    }
+  });
+}
 
-    const ref = await addDoc(collection(this.db, 'users'), data);
 
-    // asigna uid con el id generado por Firestore
-    await updateDoc(ref, { uid: ref.id });
+  cargarProgramadores() {
+  this.userService.getProgramadores().subscribe({
+    next: (data) => {
+      this.programadores = data;
+      console.log('Programadores backend:', data);
+    },
+    error: (err) => {
+      console.error('Error cargando programadores', err);
+    }
+  });
+}
 
-    this.mostrarMensaje('Programador creado correctamente');
-
-    this.nuevoProgramador = { name: '', email: '', specialty: '' };
-
-    await this.cargarProgramadores();
-  }
-
-  // obtiene lista de programadores desde Firestore
-  async cargarProgramadores() {
-    const q = query(
-      collection(this.db, 'users'),
-      where('role', '==', 'programador')
-    );
-
-    const snap = await getDocs(q);
-
-    this.programadores = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
-  }
 
   // habilita modo edición
   editarProgramador(p: any) {
@@ -106,16 +93,24 @@ export class DashboardComponent implements OnInit {
   }
 
   // guarda cambios del programador editado
-  async actualizarProgramador() {
-    const ref = doc(this.db, 'users', this.programadorEditando.id);
+  actualizarProgramador() {
+  const data = {
+    id: this.programadorEditando.id,
+    nombre: this.programadorEditando.nombre,
+    email: this.programadorEditando.email,
+    rol: this.programadorEditando.rol,
+    especialidad: this.programadorEditando.especialidad,
+    activo: this.programadorEditando.activo
+  };
 
-    await updateDoc(ref, this.programadorEditando);
-
-    this.mostrarMensaje("✔ Programador actualizado");
-
-    this.vista = 'lista';
-    await this.cargarProgramadores();
-  }
+  this.userService
+    .update(this.programadorEditando.id, data as any)
+    .subscribe(() => {
+      this.mostrarMensaje('✔ Programador actualizado');
+      this.vista = 'lista';
+      this.cargarProgramadores();
+    });
+}
 
   // mensaje de confirmación antes de eliminar
   eliminarProgramador(id: string) {
@@ -125,97 +120,108 @@ export class DashboardComponent implements OnInit {
   }
 
   // elimina programador definitivamente
-  async eliminarProgramadorConfirmado(id: string) {
-    const ref = doc(this.db, 'users', id);
-    await deleteDoc(ref);
+  eliminarProgramadorConfirmado(id: string) {
+  this.userService.delete(id).subscribe({
+    next: () => {
+      this.mostrarMensaje('🗑 Programador eliminado');
+      this.cargarProgramadores();
 
-    this.mostrarMensaje("🗑 Programador eliminado");
-    await this.cargarProgramadores();
-
-    // limpia selección si era el que estaba activo
-    if (this.programadorSeleccionado?.id === id) {
-      this.programadorSeleccionado = null;
-      this.horariosProgramador = [];
+      if (this.programadorSeleccionado?.id === id) {
+        this.programadorSeleccionado = null;
+        this.horariosProgramador = [];
+      }
+    },
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al eliminar programador');
     }
-  }
+  });
+}
 
   // agrega horario para un programador
-  async guardarHorario() {
+    guardarHorario() {
     if (!this.programadorSeleccionado) return;
 
     if (!this.nuevoHorario.horaInicio || !this.nuevoHorario.horaFin) {
-      this.mostrarMensaje('Debe seleccionar hora inicio y hora fin.');
-      return;
+    this.mostrarMensaje('Debe seleccionar hora inicio y hora fin.');
+    return;
     }
 
     if (this.nuevoHorario.horaInicio >= this.nuevoHorario.horaFin) {
-      this.mostrarMensaje('La hora de inicio debe ser menor que la hora de fin.');
-      return;
-    }
-
-    await addDoc(collection(this.db, 'horarios'), {
-      uid: this.programadorSeleccionado.id,
-      dia: this.nuevoHorario.dia,
-      horaInicio: this.nuevoHorario.horaInicio,
-      horaFin: this.nuevoHorario.horaFin
-    });
-
-    this.mostrarMensaje('✔ Horario agregado');
-
-    this.nuevoHorario = { dia: '', horaInicio: '', horaFin: '' };
-
-    await this.cargarHorariosProgramador();
+    this.mostrarMensaje('La hora de inicio debe ser menor que la hora de fin.');
+    return;
   }
+
+  const horario: Availability = {
+    id: 'A' + Date.now(),
+    dia: this.nuevoHorario.dia,
+    horaInicio: this.nuevoHorario.horaInicio,
+    horaFin: this.nuevoHorario.horaFin,
+    user: { id: this.programadorSeleccionado.id }
+  };
+
+  this.availabilityService.create(horario).subscribe({
+    next: () => {
+      this.mostrarMensaje('✔ Horario agregado');
+      this.nuevoHorario = { dia: '', horaInicio: '', horaFin: '' };
+      this.cargarHorariosProgramador();
+    },
+    error: () => {
+      this.mostrarMensaje('❌ Error al crear horario');
+    }
+  });
+}
+
 
   // carga horarios del programador seleccionado
-  async cargarHorariosProgramador() {
-    if (!this.programadorSeleccionado) return;
+  cargarHorariosProgramador() {
+  if (!this.programadorSeleccionado) return;
 
-    const q = query(
-      collection(this.db, 'horarios'),
-      where('uid', '==', this.programadorSeleccionado.id)
-    );
+  this.availabilityService
+    .getByUser(this.programadorSeleccionado.id)
+    .subscribe({
+      next: (data) => {
+        this.horariosProgramador = data;
+      },
+      error: (err) => {
+        console.error(err);
+        this.mostrarMensaje('❌ Error cargando horarios');
+      }
+    });
+}
 
-    const snap = await getDocs(q);
-
-    this.horariosProgramador = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+actualizarHorario() {
+  if (!this.horarioEditando?.id) {
+    this.mostrarMensaje('❌ Horario inválido');
+    return;
   }
+
+  if (this.horarioEditando.horaInicio >= this.horarioEditando.horaFin) {
+    this.mostrarMensaje('La hora de inicio debe ser menor que la hora fin.');
+    return;
+  }
+
+  this.availabilityService
+    .update(this.horarioEditando.id, this.horarioEditando)
+    .subscribe({
+      next: () => {
+        this.mostrarMensaje('✔ Horario actualizado');
+        this.modoEditarHorario = false;
+        this.horarioEditando = null;
+        this.cargarHorariosProgramador();
+      },
+      error: () => {
+        this.mostrarMensaje('❌ Error al actualizar horario');
+      }
+    });
+}
+
+
 
   // activa modo edición de horario
   editarHorario(horario: any) {
     this.modoEditarHorario = true;
     this.horarioEditando = { ...horario };
-  }
-
-  // guarda actualización de horario
-  async actualizarHorario() {
-    if (!this.horarioEditando.id) {
-      alert("Error: el horario no tiene ID");
-      return;
-    }
-
-    if (this.horarioEditando.horaInicio >= this.horarioEditando.horaFin) {
-      alert("La hora de inicio debe ser menor que la hora fin.");
-      return;
-    }
-
-    const ref = doc(this.db, 'horarios', this.horarioEditando.id);
-
-    await updateDoc(ref, {
-      dia: this.horarioEditando.dia,
-      horaInicio: this.horarioEditando.horaInicio,
-      horaFin: this.horarioEditando.horaFin
-    });
-
-    this.mostrarMensaje("✔ Horario actualizado");
-
-    this.modoEditarHorario = false;
-    this.horarioEditando = null;
-
-    await this.cargarHorariosProgramador();
   }
 
   cancelarEdicionHorario() {
@@ -224,29 +230,30 @@ export class DashboardComponent implements OnInit {
   }
 
   // elimina horario con confirmación
-  eliminarHorario(id: string) {
-    this.preguntar("¿Seguro que deseas eliminar este horario?", async () => {
-      await this.eliminarHorarioConfirmado(id);
-    });
-  }
 
-  async eliminarHorarioConfirmado(id: string) {
-    const ref = doc(this.db, 'horarios', id);
-    await deleteDoc(ref);
 
-    this.mostrarMensaje("🗑 Horario eliminado correctamente");
+  eliminarHorarioConfirmado(id: string) {
+  this.availabilityService.delete(id).subscribe({
+    next: () => {
+      this.mostrarMensaje('🗑 Horario eliminado');
+      this.cargarHorariosProgramador();
+    },
+    error: () => {
+      this.mostrarMensaje('❌ Error al eliminar horario');
+    }
+  });
+}
 
-    await this.cargarHorariosProgramador();
-  }
 
   // recarga horarios cuando cambia programador
-  async cambiarProgramador() {
-    if (this.programadorSeleccionado) {
-      await this.cargarHorariosProgramador();
-    } else {
-      this.horariosProgramador = [];
-    }
+  cambiarProgramador() {
+  if (this.programadorSeleccionado) {
+    this.cargarHorariosProgramador();
+  } else {
+    this.horariosProgramador = [];
   }
+}
+
 
   // muestra modal con mensaje simple
   mostrarMensaje(texto: string) {
@@ -272,4 +279,5 @@ export class DashboardComponent implements OnInit {
     this.accionPendiente = null;
     this.mostrarModalConfirmacion = false;
   }
+
 }

@@ -1,0 +1,9 @@
+<div class="notifications-container">
+  <h2>Notificaciones</h2>
+
+  <ul *ngIf="notifications.length > 0">
+    <li *ngFor="let n of notifications">{{ n.mensaje }} - {{ n.fecha | date: 'short' }}</li>
+  </ul>
+
+  <p *ngIf="notifications.length === 0">No hay notificaciones</p>
+</div>

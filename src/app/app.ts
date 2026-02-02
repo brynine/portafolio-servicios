@@ -39,10 +39,7 @@ export class App {
       const rutaActual = this.router.url;
 
       // rutas donde no se fuerza redirección
-      const rutasPublicas = [
-        '/',
-        '/explorar'
-      ];
+      const rutasPublicas = ['/', '/explorar'];
 
       // permitir ruta dinámica
       if (rutaActual.startsWith('/agendar-asesoria/')) {
@@ -76,10 +73,9 @@ export class App {
         this.router.navigate(['/explorar']);
       }
     });
-
   }
 
-  // login con google
+  // login con Google
   async loginGoogle() {
     const user = await this.auth.loginWithGoogle();
     if (!user) return;
@@ -98,7 +94,7 @@ export class App {
     this.mostrarPerfil = false;
   }
 
-  // cambia de cuenta manteniendo la lógica del rol
+  // cambiar de cuenta manteniendo la lógica del rol
   async cambiarCuenta() {
     this.mostrarMenu = false;
     this.redirigido = false;
@@ -121,7 +117,7 @@ export class App {
     this.location.back();
   }
 
-  // detectar si está en la home para ocultar botón
+  // detectar si está en la home para ocultar botones
   isHome() {
     return this.router.url === '/';
   }

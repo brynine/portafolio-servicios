@@ -149,9 +149,9 @@
       <!-- solicitudes cargadas desde Firestore -->
       <div class="tarjeta" *ngFor="let a of asesorias">
         <p><strong>Fecha:</strong> {{ a.fecha }}</p>
-        <p><strong>Usuario:</strong> {{ a.nombre }}</p>
-        <p><strong>Correo:</strong> {{ a.correo }}</p>
-        <p><strong>Mensaje:</strong> {{ a.mensaje }}</p>
+        <p><strong>Usuario:</strong> {{ a.user?.name }}</p>
+        <p><strong>Correo:</strong> {{ a.user?.email }}</p>
+        <p><strong>Mensaje:</strong> {{ a.descripcion }}</p>
 
         <!-- estado dinámico -->
         <p>

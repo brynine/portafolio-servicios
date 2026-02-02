@@ -1,36 +1,28 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { deleteDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-import { initializeApp } from 'firebase/app';
+import { AuthService } from '../../../../core/services/auth';
+import { ProjectService } from '../../../../core/services/project.service';
+import { AdvisoryService } from '../../../../core/services/advisory.service';
+import { Advisory } from '../../../../models/advisory';
+
+
 import {
   getFirestore,
   collection,
-  addDoc,
   query,
   where,
   getDocs,
   updateDoc,
-  doc
+  doc,
+  deleteDoc
 } from 'firebase/firestore';
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { initializeApp } from 'firebase/app';
 import { environment } from '../../../../../environments/environment';
-import { AuthService } from '../../../../core/services/auth';
-
-/* interfaz para tipar proyectos */
-interface Proyecto {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  tipo: 'academico' | 'laboral';
-  participacion: string;
-  tecnologias: string[];
-  repositorio: string;
-  deploy: string;
-  uid: string;
-}
+import { UserService } from '../../../../core/services/user.service';
 
 @Component({
   selector: 'app-portafolio',
@@ -41,123 +33,110 @@ interface Proyecto {
 })
 export class Portafolio implements OnInit, OnDestroy {
 
-  db = getFirestore(initializeApp(environment.firebase)); // conexión con Firestore
+  /* 🔥 Firebase SOLO para perfil y asesorías */
+  db = getFirestore(initializeApp(environment.firebase));
+  storage = getStorage();
 
-  vista: string = 'agregar'; // controla qué pantalla se muestra
+  vista: string = 'agregar';
+
+  nuevoProyecto = {
+  nombre: '',
+  descripcion: '',
+  tipo: 'academico',
+  participacion: '',
+  tecnologias: '',
+  repositorio: '',
+  deploy: ''
+};
+
 
   proyectosAcademicos: any[] = [];
   proyectosLaborales: any[] = [];
-  filtroProyecto: string = '';
   proyectosFiltrados: any[] = [];
-  proyectoEditando: any = null;
+  filtroProyecto: string = '';
 
   asesorias: any[] = [];
-
   perfil: any = {};
   userDocId: string = '';
-  storage = getStorage(); // almacenamiento Firebase para fotos
 
-  /* control de modales */
+  asesoria: Advisory[] = [];
+
+  proyectoEditando: any = null;
+
   mostrarModalMensaje = false;
   mostrarModalConfirmacion = false;
-  mensajeModal = "";
+  mensajeModal = '';
   accionPendiente: Function | null = null;
 
-  /* modelo inicial para nuevo proyecto */
-  nuevoProyecto = {
-    nombre: '',
-    descripcion: '',
-    tipo: 'academico',
-    participacion: '',
-    tecnologias: '',
-    repositorio: '',
-    deploy: ''
-  };
-
-  private unsubscribe: (() => void) | null = null;
-
-  constructor(private auth: AuthService) {}
-
-  async ngOnInit() {
-
-    // carga inicial
-    await this.refrescarPantalla();
-
-    // escucha cambios de usuario (logout o cambio de cuenta)
-    this.auth.onUserDataChange(async (user) => {
-      console.log(" Usuario cambió:", user);
-      await this.refrescarPantalla();
-    });
+  constructor(
+    private auth: AuthService,
+    private projectService: ProjectService,
+    private advisoryService: AdvisoryService,
+    private userService: UserService
+  ) {
   }
 
-  ngOnDestroy() {
-    this.unsubscribe = null; // limpieza de listeners
-  }
+  ngOnInit() {
+  console.log('PORTAFOLIO CARGADO');
 
-  /* método central que actualiza toda la pantalla */
-  private async refrescarPantalla() {
-    await this.cargarProyectos();
-    await this.cargarAsesorias();
-    await this.cargarPerfil();
-  }
-
-  /* crea y guarda un nuevo proyecto */
-  async guardarProyecto() {
-
-    if (!this.auth.currentUserData) {
-      this.mostrarMensaje('Usuario no autenticado');
+  this.auth.onUserDataChange((user) => {
+    if (!user?.backendId) {
+      console.warn('Usuario sin backendId aún');
       return;
     }
 
-    const proyecto = {
-      ...this.nuevoProyecto,
-      uid: this.auth.currentUserData.uid, // asigna proyecto al usuario
-      createdAt: new Date()
-    };
+    console.log('BackendId detectado:', user.backendId);
 
-    await addDoc(collection(this.db, 'proyectos'), proyecto);
+    this.userService.getById(user.backendId).subscribe({
+      next: (u) => {
+        console.log('USUARIO BACKEND:', u);
+      },
+      error: (err) => {
+        console.error('ERROR BACKEND:', err);
+      }
+    });
+  });
+}
 
-    this.mostrarMensaje('✔ Proyecto guardado');
 
-    // limpia formulario
-    this.nuevoProyecto = {
-      nombre: '',
-      descripcion: '',
-      tipo: 'academico',
-      participacion: '',
-      tecnologias: '',
-      repositorio: '',
-      deploy: ''
-    };
 
-    await this.cargarProyectos();
+  ngOnDestroy() {}
+
+  /* =====================================================
+     📦 PROYECTOS DESDE BACKEND (JAKARTA EE)
+     ===================================================== */
+
+  cargarProyectosDesdeBackend() {
+
+  const userId = this.auth.currentUserData?.backendId;
+
+  if (!userId) {
+    console.warn('backendId aún no disponible');
+    return;
   }
 
-  /* obtiene proyectos del usuario desde Firestore */
-  async cargarProyectos() {
+  this.projectService.getByUser(userId).subscribe({
+    next: (data) => {
+      console.log('Proyectos desde backend:', data);
 
-    if (!this.auth.currentUserData) return;
+      this.proyectosAcademicos = data.filter(
+        (p: any) => p.tipo === 'ACADEMICO'
+      );
 
-    const q = query(
-      collection(this.db, 'proyectos'),
-      where('uid', '==', this.auth.currentUserData.uid)
-    );
+      this.proyectosLaborales = data.filter(
+        (p: any) => p.tipo === 'LABORAL'
+      );
 
-    const snapshot = await getDocs(q);
+      this.filtrarProyectos();
+    },
+    error: (err) => {
+      console.error('Error al cargar proyectos:', err);
+    }
+  });
+}
 
-    const datos: Proyecto[] = snapshot.docs.map(d => ({
-      ...d.data() as Proyecto,
-      id: d.id
-    }));
 
-    // separación según categoría
-    this.proyectosAcademicos = datos.filter(p => p.tipo === 'academico');
-    this.proyectosLaborales = datos.filter(p => p.tipo === 'laboral');
 
-    this.filtrarProyectos();
-  }
-
-  /* buscador de proyectos */
   filtrarProyectos() {
     const texto = this.filtroProyecto.toLowerCase();
 
@@ -165,14 +144,13 @@ export class Portafolio implements OnInit, OnDestroy {
 
     this.proyectosFiltrados = todos.filter(p =>
       p.nombre.toLowerCase().includes(texto) ||
-      p.tecnologias.toLowerCase().includes(texto) ||
-      p.descripcion.toLowerCase().includes(texto)
+      p.descripcion.toLowerCase().includes(texto) ||
+      p.tecnologias.join(',').toLowerCase().includes(texto)
     );
   }
 
-  /* activa modo edición */
-  editarProyecto(proyecto: any) {
-    this.proyectoEditando = { ...proyecto };
+  editarProyecto(p: any) {
+    this.proyectoEditando = { ...p };
     this.vista = 'editar-proyecto';
   }
 
@@ -181,90 +159,74 @@ export class Portafolio implements OnInit, OnDestroy {
     this.vista = 'proyectos';
   }
 
-  /* guarda cambios de un proyecto existente */
-  async actualizarProyecto() {
-
-    if (!this.proyectoEditando || !this.proyectoEditando.id) {
-      this.mostrarMensaje("Error: el proyecto no tiene ID válido.");
-      return;
-    }
-
-    try {
-      const ref = doc(this.db, 'proyectos', this.proyectoEditando.id);
-
-      await updateDoc(ref, {
-        nombre: this.proyectoEditando.nombre,
-        descripcion: this.proyectoEditando.descripcion,
-        tipo: this.proyectoEditando.tipo,
-        participacion: this.proyectoEditando.participacion,
-        tecnologias: this.proyectoEditando.tecnologias,
-        repositorio: this.proyectoEditando.repositorio,
-        deploy: this.proyectoEditando.deploy
+  actualizarProyecto() {
+    this.projectService.update(this.proyectoEditando.id, this.proyectoEditando)
+      .subscribe(() => {
+        this.mostrarMensaje('✔ Proyecto actualizado');
+        this.proyectoEditando = null;
+        this.vista = 'proyectos';
+        this.cargarProyectosDesdeBackend();
       });
-
-      this.mostrarMensaje("✔ Proyecto actualizado correctamente");
-
-      this.proyectoEditando = null;
-      this.vista = 'proyectos';
-
-      await this.cargarProyectos();
-
-    } catch (error) {
-      console.error("Error al actualizar:", error);
-      this.mostrarMensaje(" Error al actualizar proyecto");
-    }
   }
 
-  /* elimina proyecto con confirmación */
-  eliminarProyecto(id: string) {
-    this.preguntar("⚠¿Seguro que deseas eliminar este proyecto?", async () => {
-      await this.eliminarProyectoConfirmado(id);
+  confirmarEliminarProyecto(id: string) {
+    this.preguntar('⚠ ¿Eliminar este proyecto?', async () => {
+      this.projectService.delete(id).subscribe(() => {
+        this.mostrarMensaje('🗑 Proyecto eliminado');
+        this.cargarProyectosDesdeBackend();
+      });
     });
   }
 
-  async eliminarProyectoConfirmado(id: string) {
-    await deleteDoc(doc(this.db, 'proyectos', id));
-    this.mostrarMensaje("🗑 Proyecto eliminado correctamente");
-    await this.cargarProyectos();
+  /* =====================================================
+     📬 ASESORÍAS (FIREBASE)
+     ===================================================== */
+
+  cargarAsesorias() {
+
+  const userId = this.auth.currentUserData?.backendId;
+
+    if (!userId) {
+    console.warn('backendId aún no disponible');
+    return;
   }
 
-  /* carga solicitudes de asesorías del programador */
-  async cargarAsesorias() {
-    if (!this.auth.currentUserData) return;
+  this.advisoryService.getByUser(userId).subscribe({
+    next: (data) => {
+      console.log('ASESORIA[0] COMPLETA 👉', data[0]);
+      this.asesorias = data;
+    },
+    error: (err) => console.error('Error asesorías:', err)
+  });
+}
 
-    const q = query(
-      collection(this.db, 'asesorias'),
-      where('programadorId', '==', this.auth.currentUserData.uid)
-    );
 
-    const snapshot = await getDocs(q);
 
-    this.asesorias = snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
-  }
 
-  /* actualiza estado de asesoría */
+
   async responder(id: string, estado: string) {
     await updateDoc(doc(this.db, 'asesorias', id), { estado });
-    this.mostrarMensaje(`✔ Asesoría actualizada: ${estado}`);
+    this.mostrarMensaje(`✔ Asesoría ${estado}`);
     await this.cargarAsesorias();
-  }
-
-  confirmarEliminarAsesoria(id: string) {
-    this.preguntar("⚠ ¿Deseas eliminar esta asesoría definitivamente?", async () => {
-      await this.eliminarAsesoria(id);
-    });
   }
 
   async eliminarAsesoria(id: string) {
     await deleteDoc(doc(this.db, 'asesorias', id));
-    this.mostrarMensaje("🗑 Asesoría eliminada correctamente");
+    this.mostrarMensaje('🗑 Asesoría eliminada');
     await this.cargarAsesorias();
   }
 
-  /* carga perfil del programador */
+  confirmarEliminarAsesoria(id: string) {
+  this.preguntar("⚠ ¿Deseas eliminar esta asesoría definitivamente?", async () => {
+    await this.eliminarAsesoria(id);
+  });
+}
+
+
+  /* =====================================================
+     👤 PERFIL (FIREBASE)
+     ===================================================== */
+
   async cargarPerfil() {
 
     if (!this.auth.currentUserData) return;
@@ -282,13 +244,11 @@ export class Portafolio implements OnInit, OnDestroy {
     }
   }
 
-  /* guarda cambios del perfil */
   async guardarPerfil() {
     await updateDoc(doc(this.db, 'users', this.userDocId), this.perfil);
-    this.mostrarMensaje("✔ Perfil actualizado correctamente");
+    this.mostrarMensaje('✔ Perfil actualizado');
   }
 
-  /* permite subir foto al Storage */
   async subirFoto(event: any) {
     const archivo = event.target.files[0];
     if (!archivo) return;
@@ -299,13 +259,16 @@ export class Portafolio implements OnInit, OnDestroy {
     await uploadBytes(storageRef, archivo);
     const url = await getDownloadURL(storageRef);
 
-    this.perfil.photo = url;
     await updateDoc(doc(this.db, 'users', this.userDocId), { photo: url });
+    this.perfil.photo = url;
 
-    this.mostrarMensaje("✔ Foto actualizada");
+    this.mostrarMensaje('✔ Foto actualizada');
   }
 
-  /* helpers de interacción */
+  /* =====================================================
+     🔔 MODALES
+     ===================================================== */
+
   mostrarMensaje(texto: string) {
     this.mensajeModal = texto;
     this.mostrarModalMensaje = true;
@@ -328,10 +291,10 @@ export class Portafolio implements OnInit, OnDestroy {
     this.mostrarModalConfirmacion = false;
   }
 
-  confirmarEliminarProyecto(id: string) {
-    this.preguntar("⚠ ¿Deseas eliminar este proyecto definitivamente?", async () => {
-      await this.eliminarProyectoConfirmado(id);
-    });
-  }
+  guardarProyecto() {
+  console.warn(
+    'guardarProyecto deshabilitado: migración a backend en progreso'
+  );
+}
 
 }

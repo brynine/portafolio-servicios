@@ -20,6 +20,8 @@ import {
 } from 'firebase/firestore';
 
 import { environment } from '../../../environments/environment';
+import { UserService } from '../../core/services/user.service';
+
 
 // tipos de rol permitidos
 export type UserRole = 'admin' | 'programador' | 'externo';
@@ -27,6 +29,8 @@ export type UserRole = 'admin' | 'programador' | 'externo';
 // estructura del usuario almacenado en firestore
 export interface AppUser {
   uid: string;
+  backendId?: string;  
+  id?: string;
   name: string | null;
   email: string | null;
   photo: string | null;
@@ -56,7 +60,7 @@ export class AuthService {
   public authReady: Promise<void>;
   private resolveAuthReady!: () => void;
 
-  constructor() {
+  constructor(private userService: UserService) {
 
     // inicializa firebase con las credenciales
     this.app = initializeApp(environment.firebase);
@@ -169,6 +173,14 @@ export class AuthService {
     });
   }
 
+  private mapBackendRole(role: string | undefined): UserRole {
+  if (role === 'admin' || role === 'programador' || role === 'externo') {
+    return role;
+  }
+  return 'externo';
+}
+
+
   // obtiene los datos del usuario desde firestore
   private async loadUserData(user: User): Promise<void> {
 
@@ -201,9 +213,22 @@ export class AuthService {
         data.uid = user.uid;
       }
 
-      this.currentUserData = data;
+      const backendData = await this.syncBackendUser(
+      normalizedEmail,
+      user.displayName
+      );
+
+      this.currentUserData = {
+      ...data,
+      backendId: backendData?.id,
+      role: this.mapBackendRole(backendData?.rol)
+    };
+
+
       this.emitUserDataChange();
       return;
+
+      
     }
 
     // si el usuario no existía, se crea con valores por defecto
@@ -263,4 +288,29 @@ export class AuthService {
   emitAppUserReady() {
     for (const cb of this.appUserReadyListeners) cb();
   }
+
+ private async syncBackendUser(
+  email: string,
+  nombre: string | null
+): Promise<{ id: string; rol: string } | null> {
+
+  try {
+    const user = await this.userService
+      .syncUser(email, nombre ?? '')
+      .toPromise();
+
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      rol: user.rol   // 🔑 ROL VIENE DEL BACKEND
+    };
+
+  } catch (error) {
+    console.error('Error sincronizando usuario con backend', error);
+    return null;
+  }
+}
+
+
 }

@@ -16,16 +16,10 @@
     <div class="cards-container" *ngIf="programadores.length">
       <div class="card" *ngFor="let p of programadores">
         <!-- foto de perfil del programador -->
-        <img
-          [src]="p.photo || 'assets/img/default-user.png'"
-          alt="Foto de {{ p.name }}"
-          class="avatar"
-          referrerpolicy="no-referrer"
-        />
+        <img src="assets/img/default-user.png" alt="Foto de {{ p.nombre }}" class="avatar" />
 
-        <!-- nombre y especialidad -->
-        <h3>{{ p.name }}</h3>
-        <p class="especialidad">{{ p.specialty || 'Programador' }}</p>
+        <h3>{{ p.nombre }}</h3>
+        <p class="especialidad">{{ p.especialidad || 'Programador' }}</p>
 
         <!-- acciones disponibles -->
         <div class="card-buttons">

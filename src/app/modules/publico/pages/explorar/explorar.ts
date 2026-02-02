@@ -4,16 +4,12 @@ import { FormsModule } from '@angular/forms';
 
 import { EmailService } from '../../../../core/services/email.service';
 
-import {
-  Firestore,
-  collection,
-  collectionData,
-  query,
-  where,
-  addDoc,
-  doc,
-  getDoc
-} from '@angular/fire/firestore';
+import { UserService } from '../../../../core/services/user.service';
+import { AvailabilityService } from '../../../../core/services/availability.service';
+import { User } from '../../../../models/user';
+import { Availability } from '../../../../models/availability';
+import { ProjectService } from '../../../../core/services/project.service';
+
 
 @Component({
   selector: 'app-explorar',
@@ -25,13 +21,17 @@ import {
 
 export class ExplorarComponent implements OnInit {
 
-  private firestore = inject(Firestore); 
+constructor(
+  private userService: UserService,
+  private availabilityService: AvailabilityService,
+  private emailService: EmailService,
+  private projectService: ProjectService
 
-  constructor(
-    private emailService: EmailService  // servicio para enviar correos
-  ) {}
+) {}
 
-  programadores: any[] = []; // lista visible de programadores
+
+  programadores: User[] = [];
+  cargando = true;
 
   // estados de UI
   mostrarModal = false;
@@ -60,54 +60,51 @@ export class ExplorarComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    // consulta programadores desde firestore filtrando por rol
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('role', '==', 'programador'));
+    this.cargarProgramadores();
+  }
 
-    // escucha cambios en tiempo real
-    collectionData(q, { idField: 'id' }).subscribe((data: any[]) => {
+  cargarProgramadores() {
+  this.userService.getProgramadores().subscribe({
+    next: (data) => {
       this.programadores = data;
-    });
-  }
-
-  async verPerfil(p: any) {
-    // obtiene información completa del usuario seleccionado
-    const ref = doc(this.firestore, 'users', p.id);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-      this.perfilCompleto = snap.data();
-      this.mostrarPerfil = true; // abre modal
-    } else {
-      alert("No se pudo cargar el perfil del programador.");
+      this.cargando = false;
+      console.log('Programadores backend:', data);
+    },
+    error: (err) => {
+      console.error(err);
+      this.cargando = false;
     }
-  }
-
-  cerrarPerfil() {
-    this.mostrarPerfil = false;
-    this.perfilCompleto = null;
-  }
-
-  async seleccionarProgramador(p: any) {
-  this.programadorSeleccionado = p;
-
-  // ✔ El UID correcto para horarios es el id del documento
-  const programadorUID = p.id;
-
-  console.log("UID usado para horarios:", programadorUID);
-
-  // consulta horarios disponibles del programador
-  const horariosRef = collection(this.firestore, 'horarios');
-  const q = query(horariosRef, where('uid', '==', programadorUID));
-
-  collectionData(q, { idField: 'id' }).subscribe(h => {
-    this.horariosProgramador = h;
-    console.log("Horarios cargados:", h);
   });
-
-  this.mostrarModal = true;
 }
 
+cargarHorarios(userId: string) {
+  this.availabilityService.getByUser(userId).subscribe({
+    next: (data) => {
+      this.horariosProgramador = data;
+      console.log('Horarios:', data);
+    },
+    error: (err) => {
+      console.error(err);
+    }
+  });
+}
+
+verPerfil(p: any) {
+  this.perfilCompleto = p;
+  this.mostrarPerfil = true;
+}
+
+cerrarPerfil() {
+  this.mostrarPerfil = false;
+  this.perfilCompleto = null;
+}
+
+
+seleccionarProgramador(p: User) {
+  this.programadorSeleccionado = p;
+  this.cargarHorarios(p.id);
+  this.mostrarModal = true;
+}
 
   cerrarModal() {
     this.mostrarModal = false;
@@ -124,9 +121,64 @@ export class ExplorarComponent implements OnInit {
     this.mensajeHora = '';
   }
 
+verPortafolio(p: any) {
+  this.programadorSeleccionado = p;
+  this.mostrarPortafolio = true;
+
+  this.projectService.getByUser(p.id).subscribe({
+    next: (data) => {
+      this.proyectos = data;
+    },
+    error: () => {
+      this.proyectos = [];
+    }
+  });
+}
+
+cerrarPortafolio() {
+  this.mostrarPortafolio = false;
+  this.proyectos = [];
+}
+
+async agendarAsesoria() {
+
+  if (!this.asesoria.hora || !this.asesoria.fecha) {
+    alert('Debe seleccionar fecha y hora');
+    return;
+  }
+
+  // 📧 correo al programador
+  this.emailService.enviarCorreoProgramador({
+    to_name: this.programadorSeleccionado.nombre,
+    cliente: this.asesoria.nombre,
+    correo: this.asesoria.correo,
+    fecha: this.asesoria.fecha,
+    hora: this.asesoria.hora,
+    mensaje: this.asesoria.mensaje,
+    correo_destino: this.programadorSeleccionado.email
+  });
+
+  // 📧 copia al usuario
+  this.emailService.enviarCorreoUsuario({
+    cliente: this.asesoria.nombre,
+    correo: this.asesoria.correo,
+    fecha: this.asesoria.fecha,
+    hora: this.asesoria.hora,
+    mensaje: this.asesoria.mensaje,
+    correo_destino: this.asesoria.correo
+  });
+
+  // UI
+  this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '' };
+  this.mostrarModal = false;
+  this.mostrarConfirmacion = true;
+  this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';
+}
+
+
 
   // método completo para guardar asesoría y enviar correos
-  async agendarAsesoria() {
+  /*async agendarAsesoria() {
 
     // validación de disponibilidad
     if (this.mensajeHora) {
@@ -147,10 +199,10 @@ export class ExplorarComponent implements OnInit {
       programadorId: this.programadorSeleccionado.uid,
       estado: 'pendiente',
       creadaEn: new Date()
-    });
+    });*/
 
     // envío de correo al programador
-    console.log("Enviando correo al programador:", this.programadorSeleccionado.email);
+    /*console.log("Enviando correo al programador:", this.programadorSeleccionado.email);
     this.emailService.enviarCorreoProgramador({
       to_name: this.programadorSeleccionado?.nombre || "Programador",
       cliente: this.asesoria.nombre,
@@ -182,9 +234,9 @@ export class ExplorarComponent implements OnInit {
     this.mensajeConfirmacion = "¡Tu solicitud fue enviada correctamente!";
     this.mostrarConfirmacion = true;
 
-  }
+  }*/
 
-  async verPortafolio(p: any) {
+  /*async verPortafolio(p: any) {
     this.programadorSeleccionado = p;
     this.mostrarPortafolio = true;
 
@@ -201,7 +253,7 @@ export class ExplorarComponent implements OnInit {
   cerrarPortafolio() {
     this.mostrarPortafolio = false;
     this.proyectos = [];
-  }
+  }*/
 
   generarHorasDisponibles() {
     this.horasDisponibles = [];

@@ -231,7 +231,6 @@ actualizarHorario() {
 
   // elimina horario con confirmación
 
-
   eliminarHorarioConfirmado(id: string) {
   this.availabilityService.delete(id).subscribe({
     next: () => {

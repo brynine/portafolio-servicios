@@ -90,6 +90,8 @@ export class Portafolio implements OnInit, OnDestroy {
     this.userService.getById(user.backendId).subscribe({
       next: (u) => {
         console.log('USUARIO BACKEND:', u);
+
+        this.cargarAsesorias();
       },
       error: (err) => {
         console.error('ERROR BACKEND:', err);
@@ -97,8 +99,6 @@ export class Portafolio implements OnInit, OnDestroy {
     });
   });
 }
-
-
 
   ngOnDestroy() {}
 
@@ -134,8 +134,6 @@ export class Portafolio implements OnInit, OnDestroy {
     }
   });
 }
-
-
 
   filtrarProyectos() {
     const texto = this.filtroProyecto.toLowerCase();
@@ -182,47 +180,43 @@ export class Portafolio implements OnInit, OnDestroy {
      📬 ASESORÍAS (FIREBASE)
      ===================================================== */
 
-  cargarAsesorias() {
-
+cargarAsesorias() {
   const userId = this.auth.currentUserData?.backendId;
 
-    if (!userId) {
+  if (!userId) {
     console.warn('backendId aún no disponible');
     return;
   }
 
-  this.advisoryService.getByUser(userId).subscribe({
+  this.advisoryService.getByProgramador(userId).subscribe({
     next: (data) => {
-      console.log('ASESORIA[0] COMPLETA 👉', data[0]);
+      console.log('ASESORÍAS DEL PROGRAMADOR:', data);
       this.asesorias = data;
     },
     error: (err) => console.error('Error asesorías:', err)
   });
 }
 
+responder(id: string, estado: string) {
+  this.advisoryService.updateEstado(id, estado).subscribe({
+    next: () => {
+      this.mostrarMensaje(`✔ Asesoría ${estado}`);
+      this.cargarAsesorias();
+    },
+    error: (err) => console.error(err)
+  });
+}
 
 
-
-
-  async responder(id: string, estado: string) {
-    await updateDoc(doc(this.db, 'asesorias', id), { estado });
-    this.mostrarMensaje(`✔ Asesoría ${estado}`);
-    await this.cargarAsesorias();
-  }
-
-  async eliminarAsesoria(id: string) {
-    await deleteDoc(doc(this.db, 'asesorias', id));
-    this.mostrarMensaje('🗑 Asesoría eliminada');
-    await this.cargarAsesorias();
-  }
+async eliminarAsesoria(id: string) {
+  console.warn('Eliminar asesoría (Firebase) DESHABILITADO');
+}
 
   confirmarEliminarAsesoria(id: string) {
   this.preguntar("⚠ ¿Deseas eliminar esta asesoría definitivamente?", async () => {
     await this.eliminarAsesoria(id);
   });
 }
-
-
   /* =====================================================
      👤 PERFIL (FIREBASE)
      ===================================================== */

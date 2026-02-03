@@ -32,4 +32,13 @@ export class NotificationService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  getByUser(userId: string): Observable<Notification[]> {
+    return this.http.get<Notification[]>(`${this.apiUrl}/user/${userId}`);
+  }
+
+  marcarLeido(id: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/leido`, {});
+  }
+
 }

@@ -44,6 +44,7 @@ constructor(
   proyectos: any[] = [];
   horariosProgramador: any[] = [];
   horasDisponibles: string[] = [];
+  proyectoSeleccionado: any = null;
   mensajeHora: string = "";
   horaValida: boolean = false;
   mostrarConfirmacion = false;
@@ -156,10 +157,13 @@ agendarAsesoria() {
     hora: this.asesoria.hora,
     estado: 'PENDIENTE',
     correoCliente: this.asesoria.correo,
+      nombreCliente: this.asesoria.nombre,
     user: {
       id: this.programadorSeleccionado.id   // 👈 usuario programador
     },
-    project: null // o { id: 'P1' } si luego lo manejas
+    project: this.proyectoSeleccionado
+    ? { id: this.proyectoSeleccionado.id }
+    : null // o { id: 'P1' } si luego lo manejas
   };
 
   this.advisoryService.create(advisory).subscribe({

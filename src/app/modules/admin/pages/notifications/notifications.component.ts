@@ -20,15 +20,28 @@ export class NotificationsComponent implements OnInit {
     this.cargarNotificaciones();
   }
 
-  cargarNotificaciones() {
-    this.notificationService.getAll().subscribe({
-      next: (data) => { 
-        this.notifications = data; 
-        console.log('Notificaciones cargadas:', data);
-      },
-      error: (err) => { 
-        console.error('Error al cargar notificaciones', err); 
-      }
-    });
-  }
+cargarNotificaciones() {
+  const userId = 'U1'; // luego saldrá del auth
+
+  this.notificationService.getByUser(userId).subscribe({
+    next: (data) => {
+      this.notifications = data;
+      console.log('Notificaciones del usuario:', data);
+    },
+    error: (err) => {
+      console.error('Error al cargar notificaciones', err);
+    }
+  });
+}
+
+marcarLeida(n: Notification) {
+  this.notificationService.marcarLeido(n.id).subscribe({
+    next: () => {
+      n.leido = true; // UX inmediata
+    },
+    error: (err) => console.error(err)
+  });
+}
+
+
 }

@@ -3,9 +3,7 @@ export interface Notification {
   mensaje: string;
   fecha: string;
   leido: boolean;
-  user?: {
+  user: {
     id: string;
-    nombre: string;
-    email: string;
   };
 }

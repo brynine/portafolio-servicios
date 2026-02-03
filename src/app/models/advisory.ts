@@ -7,12 +7,17 @@ export interface Advisory {
   fecha: string;
   hora: string;
   estado: string;
+
+  nombreCliente: string;
   correoCliente: string;
+
   user: {
     id: string;
   };
+
   project?: {
     id: string;
   } | null;
 }
+
 

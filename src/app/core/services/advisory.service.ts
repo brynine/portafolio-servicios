@@ -36,4 +36,19 @@ export class AdvisoryService {
   );
 }
 
+getByProgramador(programadorId: string) {
+  return this.http.get<any[]>(
+    `${this.apiBaseUrl}/programador/${programadorId}`
+  );
+}
+
+updateEstado(id: string, estado: string) {
+  return this.http.put(
+    `${this.apiBaseUrl}/${id}/estado`,
+    estado,
+    { responseType: 'text' }
+  );
+}
+
+
 }

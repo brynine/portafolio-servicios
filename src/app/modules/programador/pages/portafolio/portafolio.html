@@ -146,32 +146,55 @@
 
       <div *ngIf="asesorias.length === 0">No tienes solicitudes aún</div>
 
-      <!-- solicitudes cargadas desde Firestore -->
       <div class="tarjeta" *ngFor="let a of asesorias">
-        <p><strong>Fecha:</strong> {{ a.fecha }}</p>
-        <p><strong>Usuario:</strong> {{ a.user?.name }}</p>
-        <p><strong>Correo:</strong> {{ a.user?.email }}</p>
-        <p><strong>Mensaje:</strong> {{ a.descripcion }}</p>
-
-        <!-- estado dinámico -->
         <p>
-          <strong>Estado:</strong>
-          <span [class]="a.estado">{{ a.estado }}</span>
+          <strong>Fecha:</strong>
+          {{ a.fecha | date: 'yyyy-MM-dd' }} {{ a.hora }}
         </p>
 
-        <!-- acciones dependiendo del estado -->
+        <p>
+          <strong>Usuario:</strong>
+          {{ a.nombreCliente }}
+        </p>
+
+        <p>
+          <strong>Correo:</strong>
+          {{ a.correoCliente }}
+        </p>
+
+        <p>
+          <strong>Mensaje:</strong>
+          {{ a.mensaje }}
+        </p>
+
+        <p>
+          <strong>Proyecto:</strong>
+          <span *ngIf="a.project; else sinProyecto">
+            {{ a.project.nombre }}
+          </span>
+          <ng-template #sinProyecto>
+            <em>No tiene ningún proyecto seleccionado</em>
+          </ng-template>
+        </p>
+
+        <p>
+          <strong>Estado:</strong>
+          <span [class]="a.estado">
+            {{ a.estado }}
+          </span>
+        </p>
+
         <div class="acciones">
-          <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'aprobado')">
+          <button *ngIf="a.estado === 'PENDIENTE'" (click)="responder(a.id, 'CONFIRMADA')">
             ✔ Aprobar
           </button>
-          <button *ngIf="a.estado === 'pendiente'" (click)="responder(a.id, 'rechazado')">
+
+          <button *ngIf="a.estado === 'PENDIENTE'" (click)="responder(a.id, 'RECHAZADA')">
             ✖ Rechazar
           </button>
-          <button *ngIf="a.estado === 'aprobado'" (click)="responder(a.id, 'realizado')">
-            ✔ Marcar como realizado
-          </button>
+
           <button
-            *ngIf="a.estado !== 'pendiente'"
+            *ngIf="a.estado !== 'PENDIENTE'"
             class="eliminar-btn"
             (click)="confirmarEliminarAsesoria(a.id)"
           >

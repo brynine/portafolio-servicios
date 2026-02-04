@@ -16,7 +16,12 @@
     <div class="cards-container" *ngIf="programadores.length">
       <div class="card" *ngFor="let p of programadores">
         <!-- foto de perfil del programador -->
-        <img src="assets/img/default-user.png" alt="Foto de {{ p.nombre }}" class="avatar" />
+        <img
+          [src]="p.photo || 'assets/img/default-user.png'"
+          alt="Foto de {{ p.nombre }}"
+          class="avatar"
+          referrerpolicy="no-referrer"
+        />
 
         <h3>{{ p.nombre }}</h3>
         <p class="especialidad">{{ p.especialidad || 'Programador' }}</p>
@@ -35,7 +40,11 @@
   <div class="modal-backdrop" *ngIf="mostrarPerfil">
     <div class="modal perfil-modal">
       <!-- foto de perfil -->
-      <img class="perfil-foto" [src]="perfilCompleto?.photo" referrerpolicy="no-referrer" />
+      <img
+        class="perfil-foto"
+        [src]="perfilCompleto?.photo || 'assets/default-user.png'"
+        referrerpolicy="no-referrer"
+      />
 
       <h2>{{ perfilCompleto?.name }}</h2>
       <p class="correo">{{ perfilCompleto?.email }}</p>

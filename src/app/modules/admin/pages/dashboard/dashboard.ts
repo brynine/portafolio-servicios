@@ -6,7 +6,6 @@ import { UserService } from '../../../../core/services/user.service';
 import { User } from '../../../../models/user';
 import { AvailabilityService } from '../../../../core/services/availability.service';
 import { Availability } from '../../../../models/availability';
-
 import { environment } from '../../../../../environments/environment';
 import { initializeApp } from 'firebase/app';
 
@@ -19,8 +18,6 @@ import { initializeApp } from 'firebase/app';
 })
 export class DashboardComponent implements OnInit {
 
-
-  // controla qué vista se muestra (crear, editar o lista)
   vista: string = 'lista';
 
   programadores: User[] = [];
@@ -40,13 +37,11 @@ export class DashboardComponent implements OnInit {
   horarioEditando: any = null;
   modoEditarHorario: boolean = false;
 
-  // estados de los modales
   mostrarModalMensaje = false;
   mostrarModalConfirmacion = false;
   mensajeModal = "";
   accionPendiente: Function | null = null;
 
-  // modelo para agregar horarios
   nuevoHorario = {
     dia: '',
     horaInicio: '',
@@ -57,7 +52,6 @@ export class DashboardComponent implements OnInit {
     await this.cargarProgramadores(); 
   }
 
-  // crea un nuevo programador
   crearProgramador() {
   this.userService.crearProgramador({
     email: this.nuevoProgramador.email,
@@ -72,7 +66,6 @@ export class DashboardComponent implements OnInit {
   });
 }
 
-
   cargarProgramadores() {
   this.userService.getProgramadores().subscribe({
     next: (data) => {
@@ -84,7 +77,6 @@ export class DashboardComponent implements OnInit {
     }
   });
 }
-
 
   // habilita modo edición
   editarProgramador(p: any) {
@@ -115,6 +107,7 @@ export class DashboardComponent implements OnInit {
   // mensaje de confirmación antes de eliminar
   eliminarProgramador(id: string) {
     this.preguntar("¿Seguro que deseas eliminar este programador?", async () => {
+      console.log('ID recibido para eliminar:', id);
       await this.eliminarProgramadorConfirmado(id);
     });
   }
@@ -172,7 +165,6 @@ export class DashboardComponent implements OnInit {
   });
 }
 
-
   // carga horarios del programador seleccionado
   cargarHorariosProgramador() {
   if (!this.programadorSeleccionado) return;
@@ -216,8 +208,6 @@ actualizarHorario() {
     });
 }
 
-
-
   // activa modo edición de horario
   editarHorario(horario: any) {
     this.modoEditarHorario = true;
@@ -230,7 +220,6 @@ actualizarHorario() {
   }
 
   // elimina horario con confirmación
-
   eliminarHorarioConfirmado(id: string) {
   this.availabilityService.delete(id).subscribe({
     next: () => {
@@ -243,7 +232,6 @@ actualizarHorario() {
   });
 }
 
-
   // recarga horarios cuando cambia programador
   cambiarProgramador() {
   if (this.programadorSeleccionado) {
@@ -252,7 +240,6 @@ actualizarHorario() {
     this.horariosProgramador = [];
   }
 }
-
 
   // muestra modal con mensaje simple
   mostrarMensaje(texto: string) {

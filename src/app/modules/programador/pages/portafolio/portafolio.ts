@@ -1,13 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { AuthService } from '../../../../core/services/auth';
 import { ProjectService } from '../../../../core/services/project.service';
 import { AdvisoryService } from '../../../../core/services/advisory.service';
 import { Advisory } from '../../../../models/advisory';
-
-
+import { Notification } from '../../../../models/notification';
 import {
   getFirestore,
   collection,
@@ -18,11 +16,11 @@ import {
   doc,
   deleteDoc
 } from 'firebase/firestore';
-
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-portafolio',
@@ -31,13 +29,15 @@ import { UserService } from '../../../../core/services/user.service';
   templateUrl: './portafolio.html',
   styleUrl: './portafolio.scss',
 })
+
 export class Portafolio implements OnInit, OnDestroy {
 
-  /* 🔥 Firebase SOLO para perfil y asesorías */
   db = getFirestore(initializeApp(environment.firebase));
   storage = getStorage();
 
   vista: string = 'agregar';
+  userId!: string;
+  userBackendId!: string;
 
   nuevoProyecto = {
   nombre: '',
@@ -49,34 +49,35 @@ export class Portafolio implements OnInit, OnDestroy {
   deploy: ''
 };
 
-
   proyectosAcademicos: any[] = [];
   proyectosLaborales: any[] = [];
   proyectosFiltrados: any[] = [];
   filtroProyecto: string = '';
-
   asesorias: any[] = [];
   perfil: any = {};
   userDocId: string = '';
-
+  googlePhoto: string | null = null;
   asesoria: Advisory[] = [];
-
   proyectoEditando: any = null;
-
   mostrarModalMensaje = false;
   mostrarModalConfirmacion = false;
   mensajeModal = '';
   accionPendiente: Function | null = null;
+  notificaciones: any[] = [];
+  asesoriasFinales: any[] = [];
+  mapaNotificaciones = new Map<string, Notification>();
+
 
   constructor(
     private auth: AuthService,
     private projectService: ProjectService,
     private advisoryService: AdvisoryService,
+    private notificationService: NotificationService,
     private userService: UserService
   ) {
   }
 
-  ngOnInit() {
+ngOnInit() {
   console.log('PORTAFOLIO CARGADO');
 
   this.auth.onUserDataChange((user) => {
@@ -85,14 +86,22 @@ export class Portafolio implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('BackendId detectado:', user.backendId);
+    // ✅ ESTA LÍNEA FALTABA
+    this.userBackendId = user.backendId;
 
-    this.userService.getById(user.backendId).subscribe({
+    console.log('BackendId detectado:', this.userBackendId);
+
+    this.userService.getById(this.userBackendId).subscribe({
       next: (u) => {
         console.log('USUARIO BACKEND:', u);
 
+        this.googlePhoto = user.photo || null;
+
+        // 🔥 AHORA SÍ
+        this.cargarPerfilDesdeBackend();
         this.cargarAsesorias();
         this.cargarProyectosDesdeBackend();
+        this.cargarNotificaciones();
       },
       error: (err) => {
         console.error('ERROR BACKEND:', err);
@@ -100,6 +109,7 @@ export class Portafolio implements OnInit, OnDestroy {
     });
   });
 }
+
 
   ngOnDestroy() {}
 
@@ -180,7 +190,6 @@ actualizarProyecto() {
     });
 }
 
-
   confirmarEliminarProyecto(id: string) {
     this.preguntar('⚠ ¿Eliminar este proyecto?', async () => {
       this.projectService.delete(id).subscribe(() => {
@@ -191,39 +200,92 @@ actualizarProyecto() {
   }
 
   /* =====================================================
-     📬 ASESORÍAS (FIREBASE)
+     📬 ASESORÍAS
      ===================================================== */
 
 cargarAsesorias() {
-  const userId = this.auth.currentUserData?.backendId;
 
-  if (!userId) {
-    console.warn('backendId aún no disponible');
+  if (!this.userBackendId) {
+    console.warn('No hay backendId para cargar asesorías');
     return;
   }
 
-  this.advisoryService.getByProgramador(userId).subscribe({
-    next: (data) => {
-      console.log('ASESORÍAS DEL PROGRAMADOR:', data);
-      this.asesorias = data;
+  // 1️⃣ Asesorías del programador
+  this.advisoryService.getByProgramador(this.userBackendId).subscribe({
+    next: (asesorias) => {
+
+      console.log('ASESORÍAS BACKEND:', asesorias);
+      this.asesorias = asesorias;
+
+      // 2️⃣ Notificaciones del mismo usuario
+      this.notificationService.getByUser(this.userBackendId).subscribe({
+        next: (nots) => {
+
+          console.log('NOTIFICACIONES:', nots);
+          this.notificaciones = nots;
+
+          // 3️⃣ Mapa mensaje → notificación
+          // 3️⃣ Mapa advisoryId → notificación
+this.mapaNotificaciones.clear();
+nots.forEach(n => {
+  if (n.advisoryId) {
+    this.mapaNotificaciones.set(n.advisoryId, n);
+  }
+});
+
+// 4️⃣ Fusionar datos usando advisoryId
+this.asesoriasFinales = asesorias.map(a => {
+  const notif = this.mapaNotificaciones.get(a.id);
+
+  return {
+    ...a,
+    leido: notif ? notif.leido : false,
+    notificationId: notif?.id || null
+  };
+});
+
+console.log('ASESORÍAS FINALES:', this.asesoriasFinales);
+
+        }
+      });
     },
-    error: (err) => console.error('Error asesorías:', err)
+    error: (err) => {
+      console.error('Error cargando asesorías', err);
+    }
   });
 }
 
 responder(id: string, estado: string) {
   this.advisoryService.updateEstado(id, estado).subscribe({
     next: () => {
+
+      // 🔥 ACTUALIZAR EN asesoriasFinales
+      const asesoria = this.asesoriasFinales.find(a => a.id === id);
+      if (asesoria) {
+        asesoria.estado = estado;
+      }
+
       this.mostrarMensaje(`✔ Asesoría ${estado}`);
-      this.cargarAsesorias();
     },
-    error: (err) => console.error(err)
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al actualizar asesoría');
+    }
   });
 }
 
 
-async eliminarAsesoria(id: string) {
-  console.warn('Eliminar asesoría (Firebase) DESHABILITADO');
+eliminarAsesoria(id: string) {
+  this.advisoryService.delete(id).subscribe({
+    next: () => {
+      this.mostrarMensaje('🗑 Asesoría eliminada correctamente');
+      this.cargarAsesorias();
+    },
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al eliminar asesoría');
+    }
+  });
 }
 
   confirmarEliminarAsesoria(id: string) {
@@ -232,30 +294,80 @@ async eliminarAsesoria(id: string) {
   });
 }
   /* =====================================================
-     👤 PERFIL (FIREBASE)
+     👤 PERFIL
      ===================================================== */
+cargarPerfilDesdeBackend() {
+  const backendId = this.auth.currentUserData?.backendId;
 
-  async cargarPerfil() {
+  if (!backendId) {
+    console.warn('No hay backendId');
+    return;
+  }
 
-    if (!this.auth.currentUserData) return;
+  this.userService.getById(backendId).subscribe({
+    next: (user) => {
+      console.log('Perfil desde backend:', user);
 
-    const q = query(
-      collection(this.db, 'users'),
-      where('email', '==', this.auth.currentUserData.email)
-    );
+this.perfil = {
+  name: user.nombre,
+  especialidad: user.especialidad,
+  description: user.bio,
+  github: user.github,
+  linkedin: user.linkedin,
+  instagram: user.instagram,
+  sitioWeb: user.sitioWeb,
 
-    const snap = await getDocs(q);
+  photo: this.auth.currentUserData?.photo || null
+};
 
-    if (!snap.empty) {
-      this.userDocId = snap.docs[0].id;
-      this.perfil = snap.docs[0].data();
+    },
+    error: (err) => {
+      console.error('Error cargando perfil:', err);
     }
+  });
+}
+
+
+guardarPerfil() {
+  const backendId = this.auth.currentUserData?.backendId;
+
+  if (!backendId) {
+    this.mostrarMensaje('❌ Usuario sin backendId');
+    return;
   }
 
-  async guardarPerfil() {
-    await updateDoc(doc(this.db, 'users', this.userDocId), this.perfil);
-    this.mostrarMensaje('✔ Perfil actualizado');
-  }
+  console.log('Perfil actual:', this.perfil);
+
+  const payload = {
+    nombre: this.perfil.name,         
+    especialidad: this.perfil.especialidad, 
+    bio: this.perfil.description,            
+    github: this.perfil.github,
+    linkedin: this.perfil.linkedin,
+    instagram: this.perfil.instagram,
+    sitioWeb: this.perfil.sitioWeb
+  };
+
+  console.log('Payload crudo:', payload);
+
+  const cleanPayload = Object.fromEntries(
+    Object.entries(payload).filter(
+      ([_, v]) => v !== undefined && v !== null && v !== ''
+    )
+  );
+
+  console.log('Payload enviado al backend:', cleanPayload);
+
+  this.userService.update(backendId, cleanPayload).subscribe({
+    next: () => {
+      this.mostrarMensaje('✔ Perfil actualizado correctamente');
+    },
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al guardar perfil');
+    }
+  });
+}
 
   async subirFoto(event: any) {
     const archivo = event.target.files[0];
@@ -343,4 +455,41 @@ guardarProyecto() {
     }
   });
 }
+
+marcarComoLeido(a: any) {
+  console.log('Marcando como leído:', a);
+
+  if (!a.notificationId) {
+    console.warn('No hay notificationId');
+    return;
+  }
+
+  this.notificationService.marcarLeido(a.notificationId).subscribe({
+    next: () => {
+      a.leido = true; // 🔥 actualiza UI
+      this.mostrarMensaje('✔ Marcada como leída');
+    },
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al marcar como leído');
+    }
+  });
+}
+
+
+
+cargarNotificaciones() {
+  const userId = this.auth.currentUserData?.backendId;
+  if (!userId) return;
+
+  this.notificationService.getByUser(userId).subscribe({
+    next: (data) => {
+      this.notificaciones = data;
+      console.log('NOTIFICACIONES:', data);
+    },
+    error: (err) => console.error(err)
+  });
+}
+
+
 }

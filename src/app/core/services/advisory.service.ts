@@ -50,5 +50,4 @@ updateEstado(id: string, estado: string) {
   );
 }
 
-
 }

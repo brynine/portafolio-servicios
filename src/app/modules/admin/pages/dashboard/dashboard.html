@@ -43,7 +43,6 @@
       <h2>Programadores Registrados</h2>
 
       <div *ngFor="let p of programadores" class="tarjeta">
-        <!-- 🔑 USAR NOMBRES DEL BACKEND -->
         <h3>{{ p.nombre }}</h3>
         <p><strong>Email:</strong> {{ p.email }}</p>
         <p><strong>Especialidad:</strong> {{ p.especialidad || 'Sin especialidad' }}</p>
@@ -61,7 +60,6 @@
 
       <form (ngSubmit)="actualizarProgramador()">
         <label>Nombre</label>
-        <!-- 🔑 BACKEND -->
         <input type="text" [(ngModel)]="programadorEditando.nombre" name="editNombre" required />
 
         <label>Correo</label>

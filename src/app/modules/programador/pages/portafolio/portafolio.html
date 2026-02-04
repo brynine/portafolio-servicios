@@ -146,26 +146,15 @@
 
       <div *ngIf="asesorias.length === 0">No tienes solicitudes aún</div>
 
-      <div class="tarjeta" *ngFor="let a of asesorias">
+      <div class="tarjeta" *ngFor="let a of asesoriasFinales">
         <p>
           <strong>Fecha:</strong>
           {{ a.fecha | date: 'yyyy-MM-dd' }} {{ a.hora }}
         </p>
 
-        <p>
-          <strong>Usuario:</strong>
-          {{ a.nombreCliente }}
-        </p>
-
-        <p>
-          <strong>Correo:</strong>
-          {{ a.correoCliente }}
-        </p>
-
-        <p>
-          <strong>Mensaje:</strong>
-          {{ a.mensaje }}
-        </p>
+        <p><strong>Usuario:</strong> {{ a.nombreCliente }}</p>
+        <p><strong>Correo:</strong> {{ a.correoCliente }}</p>
+        <p><strong>Mensaje:</strong> {{ a.mensaje }}</p>
 
         <p>
           <strong>Proyecto:</strong>
@@ -185,16 +174,20 @@
         </p>
 
         <div class="acciones">
-          <button *ngIf="a.estado === 'PENDIENTE'" (click)="responder(a.id, 'CONFIRMADA')">
-            ✔ Aprobar
+          <!-- 1️⃣ SOLO cuando NO está leída -->
+          <button *ngIf="!a.leido" class="btn-leido" (click)="marcarComoLeido(a)">
+            ✔ Marcar como leído
           </button>
 
-          <button *ngIf="a.estado === 'PENDIENTE'" (click)="responder(a.id, 'RECHAZADA')">
-            ✖ Rechazar
-          </button>
+          <!-- 2️⃣ SOLO cuando ya está leída y sigue pendiente -->
+          <ng-container *ngIf="a.leido && a.estado === 'PENDIENTE'">
+            <button (click)="responder(a.id, 'CONFIRMADA')">✔ Aprobar</button>
+            <button (click)="responder(a.id, 'RECHAZADA')">✖ Rechazar</button>
+          </ng-container>
 
+          <!-- 3️⃣ SOLO cuando ya NO está pendiente -->
           <button
-            *ngIf="a.estado !== 'PENDIENTE'"
+            *ngIf="a.leido && a.estado !== 'PENDIENTE'"
             class="eliminar-btn"
             (click)="confirmarEliminarAsesoria(a.id)"
           >
@@ -210,7 +203,10 @@
 
       <!-- foto editable con Firebase Storage -->
       <div class="foto-container">
-        <img [src]="perfil.photo || 'assets/img/default-user.png'" class="foto-perfil" />
+        <img
+          [src]="perfil.photo || googlePhoto || 'assets/img/default-user.png'"
+          class="foto-perfil"
+        />
         <label class="btn-foto">
           Cambiar foto
           <input type="file" accept="image/*" (change)="subirFoto($event)" />
@@ -223,7 +219,7 @@
         <input type="text" [(ngModel)]="perfil.name" name="nombre" required />
 
         <label>Especialidad</label>
-        <input type="text" [(ngModel)]="perfil.specialty" name="specialty" />
+        <input type="text" [(ngModel)]="perfil.especialidad" name="especialidad" />
 
         <label>Descripción</label>
         <textarea [(ngModel)]="perfil.description" name="description"></textarea>
@@ -238,7 +234,7 @@
         <input type="text" [(ngModel)]="perfil.instagram" name="instagram" />
 
         <label>Sitio Web</label>
-        <input type="text" [(ngModel)]="perfil.website" name="website" />
+        <input type="text" [(ngModel)]="perfil.sitioWeb" name="sitioWeb" />
 
         <button type="submit" class="btn-guardar">Guardar cambios</button>
       </form>

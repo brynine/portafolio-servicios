@@ -1,15 +1,20 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { EmailService } from '../../../../core/services/email.service';
-
 import { UserService } from '../../../../core/services/user.service';
 import { AvailabilityService } from '../../../../core/services/availability.service';
 import { User } from '../../../../models/user';
 import { Availability } from '../../../../models/availability';
 import { ProjectService } from '../../../../core/services/project.service';
 import { AdvisoryService } from '../../../../core/services/advisory.service';
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+import { environment } from '../../../../../environments/environment';
 
 interface AsesoriaForm {
   nombre: string;
@@ -17,8 +22,12 @@ interface AsesoriaForm {
   fecha: string;
   hora: string;
   mensaje: string;
-  projectId?: string; // 👈 opcional
+  projectId?: string;
 }
+interface UserWithPhoto extends User {
+  photo?: string | null;
+}
+
 
 @Component({
   selector: 'app-explorar',
@@ -30,6 +39,8 @@ interface AsesoriaForm {
 
 export class ExplorarComponent implements OnInit {
 
+  db = getFirestore(initializeApp(environment.firebase));
+  
 constructor(
   private userService: UserService,
   private availabilityService: AvailabilityService,
@@ -39,15 +50,11 @@ constructor(
 
 ) {}
 
-
-  programadores: User[] = [];
+programadores: UserWithPhoto[] = [];
   cargando = true;
-
-  // estados de UI
   mostrarModal = false;
   mostrarPerfil = false;
   mostrarPortafolio = false;
-
   proyectos: any[] = [];
   horariosProgramador: any[] = [];
   horasDisponibles: string[] = [];
@@ -56,12 +63,9 @@ constructor(
   horaValida: boolean = false;
   mostrarConfirmacion = false;
   mensajeConfirmacion = "";
-
   programadorSeleccionado: any = null;
-
   perfilCompleto: any = null;
 
-  // datos del formulario para pedir asesoría
   asesoria = {
     nombre: '',
     correo: '',
@@ -75,19 +79,41 @@ constructor(
     this.cargarProgramadores();
   }
 
-  cargarProgramadores() {
-  this.userService.getProgramadores().subscribe({
-    next: (data) => {
-      this.programadores = data;
-      this.cargando = false;
-      console.log('Programadores backend:', data);
-    },
-    error: (err) => {
-      console.error(err);
-      this.cargando = false;
-    }
-  });
+async cargarProgramadores() {
+  this.cargando = true;
+
+  try {
+    // 1️⃣ programadores desde backend
+    const programadoresBackend = await this.userService
+      .getProgramadores()
+      .toPromise();
+
+    // 2️⃣ usuarios desde Firestore
+    const snap = await getDocs(collection(getFirestore(), 'users'));
+    const usuariosFirestore = snap.docs.map(d => d.data());
+
+    // 3️⃣ merge por email
+    this.programadores = programadoresBackend!.map((p: any) => {
+      const match = usuariosFirestore.find(
+        (u: any) =>
+          u.email?.toLowerCase() === p.email?.toLowerCase()
+      );
+
+      return {
+        ...p,
+        photo: match?.['photo'] || null
+      };
+    });
+
+    console.log('Programadores fusionados:', this.programadores);
+
+  } catch (err) {
+    console.error('Error cargando programadores', err);
+  } finally {
+    this.cargando = false;
+  }
 }
+
 
 cargarHorarios(userId: string) {
   this.availabilityService.getByUser(userId).subscribe({
@@ -114,11 +140,43 @@ cargarProyectos(programadorId: string) {
   });
 }
 
+async verPerfil(p: any) {
 
-verPerfil(p: any) {
-  this.perfilCompleto = p;
-  this.mostrarPerfil = true;
+  //  obtener usuarios de firestore
+  const snap = await getDocs(collection(this.db, 'users'));
+  const usuariosFirestore = snap.docs.map(d => d.data());
+
+  //buscar match por email
+  const match = usuariosFirestore.find(
+    (u: any) =>
+      u.email?.toLowerCase() === p.email?.toLowerCase()
+  );
+
+  //pedir perfil al backend
+  this.userService.getById(p.id).subscribe({
+    next: (user) => {
+      this.perfilCompleto = {
+        name: user.nombre,
+        email: user.email,
+        specialty: user.especialidad,
+        description: user.bio,
+        github: user.github,
+        linkedin: user.linkedin,
+        instagram: user.instagram,
+        website: user.sitioWeb,
+
+        photo: match?.['photo'] || null
+      };
+
+      this.mostrarPerfil = true;
+    },
+    error: (err) => {
+      console.error('Error cargando perfil', err);
+    }
+  });
 }
+
+
 
 cerrarPerfil() {
   this.mostrarPerfil = false;
@@ -130,7 +188,7 @@ seleccionarProgramador(p: User) {
   this.programadorSeleccionado = p;
 
   this.cargarHorarios(p.id);
-  this.cargarProyectos(p.id);   // 👈 AÑADIR ESTO
+  this.cargarProyectos(p.id);
 
   this.mostrarModal = true;
 }
@@ -139,7 +197,6 @@ seleccionarProgramador(p: User) {
   cerrarModal() {
     this.mostrarModal = false;
 
-    // reinicia formulario
     this.asesoria = {
       nombre: '',
       correo: '',
@@ -186,11 +243,11 @@ agendarAsesoria() {
     correoCliente: this.asesoria.correo,
       nombreCliente: this.asesoria.nombre,
     user: {
-      id: this.programadorSeleccionado.id   // 👈 usuario programador
+      id: this.programadorSeleccionado.id
     },
     project: this.asesoria.projectId
   ? { id: this.asesoria.projectId }
-  : null // o { id: 'P1' } si luego lo manejas
+  : null
   };
 
   const nombreProyecto = this.asesoria.projectId
@@ -200,7 +257,7 @@ agendarAsesoria() {
   this.advisoryService.create(advisory).subscribe({
     next: () => {
 
-      // 📧 correo al programador
+      // correo al programador
       this.emailService.enviarCorreoProgramador({
         to_name: this.programadorSeleccionado.nombre,
         cliente: this.asesoria.nombre,
@@ -212,7 +269,7 @@ agendarAsesoria() {
         correo_destino: this.programadorSeleccionado.email
       });
 
-      // 📧 copia al usuario
+      // copia al usuario
       this.emailService.enviarCorreoUsuario({
         cliente: this.asesoria.nombre,
         correo: this.asesoria.correo,

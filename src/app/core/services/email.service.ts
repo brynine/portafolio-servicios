@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as emailjs from '@emailjs/browser'; 
 
 @Injectable({
-  providedIn: 'root' // servicio disponible en toda la app
+  providedIn: 'root'
 })
 export class EmailService {
 

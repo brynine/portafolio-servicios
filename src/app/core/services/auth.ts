@@ -180,7 +180,6 @@ export class AuthService {
   return 'externo';
 }
 
-
   // obtiene los datos del usuario desde firestore
   private async loadUserData(user: User): Promise<void> {
 
@@ -228,7 +227,6 @@ export class AuthService {
       this.emitUserDataChange();
       return;
 
-      
     }
 
     // si el usuario no existía, se crea con valores por defecto
@@ -303,7 +301,7 @@ export class AuthService {
 
     return {
       id: user.id,
-      rol: user.rol   // 🔑 ROL VIENE DEL BACKEND
+      rol: user.rol
     };
 
   } catch (error) {
@@ -311,6 +309,5 @@ export class AuthService {
     return null;
   }
 }
-
 
 }

@@ -137,6 +137,19 @@
               (change)="validarHora()"
             />
 
+            <!-- proyecto opcional -->
+            <div class="form-group">
+              <label>Proyecto (opcional)</label>
+
+              <select [(ngModel)]="asesoria.projectId" name="projectId">
+                <option value="">-- Sin proyecto --</option>
+
+                <option *ngFor="let pr of proyectos" [value]="pr.id">
+                  {{ pr.nombre }}
+                </option>
+              </select>
+            </div>
+
             <!-- validación dinámica -->
             <div *ngIf="mensajeHora" class="error-hora">
               {{ mensajeHora }}

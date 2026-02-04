@@ -4,6 +4,8 @@ import { Firestore, collection, addDoc, query, where, getDocs } from '@angular/f
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth';
+import { ProjectService } from '../../../../core/services/project.service';
+
 
 @Component({
   selector: 'app-agendar-asesoria',
@@ -21,30 +23,38 @@ export class AgendarAsesoriaComponent implements OnInit {
     correo: '',
     mensaje: '',
     fecha: '',
-    hora: ''      
+    hora: '' ,
+    projectId: ''   
   };
 
   horarios: any[] = [];  
   horariosDelDia: any[] = []; 
   horasDisponibles: string[] = []; 
+  projects: any[] = [];
   sinDisponibilidad = false;     
 
   constructor(
     private firestore: Firestore,
     private route: ActivatedRoute, 
-    public auth: AuthService         
+    public auth: AuthService,
+    private projectService: ProjectService       
   ) {}
 
-  async ngOnInit() {
-    const uidRuta = this.route.snapshot.paramMap.get('id');
+async ngOnInit() {
+  const backendId = this.auth.currentUserData?.backendId;
 
-    if (uidRuta) {
-      this.programadorId = uidRuta;
-      console.log("UID del programador recibido:", this.programadorId);
-
-      await this.cargarHorarios();
-    }
+  if (!backendId) {
+    console.error('No se encontró backendId del programador');
+    return;
   }
+
+  this.programadorId = backendId;
+
+  console.log('BackendId del programador:', this.programadorId);
+
+  await this.cargarHorarios();
+  this.cargarProyectos();
+}
 
   async cargarHorarios() {
     const ref = collection(this.firestore, 'horarios');
@@ -54,6 +64,22 @@ export class AgendarAsesoriaComponent implements OnInit {
     this.horarios = snap.docs.map(d => d.data());
     console.log("Horarios cargados:", this.horarios);
   }
+
+cargarProyectos() {
+  if (!this.programadorId) return;
+
+  this.projectService.getByUser(this.programadorId).subscribe({
+    next: (data) => {
+      this.projects = data;
+      console.log('Proyectos del programador:', data);
+    },
+    error: (err) => {
+      console.error('Error cargando proyectos', err);
+    }
+  });
+}
+
+
 
   onFechaChange(event: any) {
     const valor = event.target.value;
@@ -138,12 +164,25 @@ export class AgendarAsesoriaComponent implements OnInit {
     // guarda la asesoría en firebase
     const asesoriasRef = collection(this.firestore, 'asesorias');
 
-    const data = {
-      ...this.asesoria,
-      programadorId: this.programadorId,
-      estado: 'pendiente',
-      creadaEn: new Date()
-    };
+const data = {
+  nombreCliente: this.asesoria.nombre,
+  correoCliente: this.asesoria.correo,
+  mensaje: this.asesoria.mensaje,
+  fecha: this.asesoria.fecha,
+  hora: this.asesoria.hora,
+  estado: 'PENDIENTE',
+
+  user: {
+    id: this.programadorId // 👈 programador
+  },
+
+  project: this.asesoria.projectId
+    ? { id: this.asesoria.projectId }
+    : null, // 👈 OPCIONAL
+
+  creadaEn: new Date()
+};
+
 
     await addDoc(asesoriasRef, data);
 
@@ -155,7 +194,8 @@ export class AgendarAsesoriaComponent implements OnInit {
       correo: '',
       mensaje: '',
       fecha: '',
-      hora: ''
+      hora: '',
+      projectId: ''
     };
   }
 }

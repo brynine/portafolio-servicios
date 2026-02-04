@@ -27,6 +27,16 @@
     El programador no tiene disponibilidad ese día.
   </p>
 
+  <label>Proyecto (opcional)</label>
+
+  <select [(ngModel)]="asesoria.projectId" name="projectId">
+    <option value="">-- Sin proyecto --</option>
+
+    <option *ngFor="let p of projects" [value]="p.id">
+      {{ p.nombre }}
+    </option>
+  </select>
+
   <!-- mensaje opcional del usuario -->
   <label>Mensaje</label>
   <textarea [(ngModel)]="asesoria.mensaje" name="mensaje" rows="4"></textarea>

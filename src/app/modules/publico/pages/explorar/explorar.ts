@@ -11,7 +11,14 @@ import { Availability } from '../../../../models/availability';
 import { ProjectService } from '../../../../core/services/project.service';
 import { AdvisoryService } from '../../../../core/services/advisory.service';
 
-
+interface AsesoriaForm {
+  nombre: string;
+  correo: string;
+  fecha: string;
+  hora: string;
+  mensaje: string;
+  projectId?: string; // 👈 opcional
+}
 
 @Component({
   selector: 'app-explorar',
@@ -60,7 +67,8 @@ constructor(
     correo: '',
     fecha: '',
     hora: '',
-    mensaje: ''
+    mensaje: '',
+    projectId: ''
   };
 
   ngOnInit(): void {
@@ -93,6 +101,20 @@ cargarHorarios(userId: string) {
   });
 }
 
+cargarProyectos(programadorId: string) {
+  this.projectService.getByUser(programadorId).subscribe({
+    next: (data) => {
+      this.proyectos = data;
+      console.log('Proyectos del programador:', data);
+    },
+    error: (err) => {
+      console.error('Error cargando proyectos', err);
+      this.proyectos = [];
+    }
+  });
+}
+
+
 verPerfil(p: any) {
   this.perfilCompleto = p;
   this.mostrarPerfil = true;
@@ -106,9 +128,13 @@ cerrarPerfil() {
 
 seleccionarProgramador(p: User) {
   this.programadorSeleccionado = p;
+
   this.cargarHorarios(p.id);
+  this.cargarProyectos(p.id);   // 👈 AÑADIR ESTO
+
   this.mostrarModal = true;
 }
+
 
   cerrarModal() {
     this.mostrarModal = false;
@@ -119,7 +145,8 @@ seleccionarProgramador(p: User) {
       correo: '',
       fecha: '',
       hora: '',
-      mensaje: ''
+      mensaje: '',
+      projectId: ''
     };
 
     this.mensajeHora = '';
@@ -161,10 +188,14 @@ agendarAsesoria() {
     user: {
       id: this.programadorSeleccionado.id   // 👈 usuario programador
     },
-    project: this.proyectoSeleccionado
-    ? { id: this.proyectoSeleccionado.id }
-    : null // o { id: 'P1' } si luego lo manejas
+    project: this.asesoria.projectId
+  ? { id: this.asesoria.projectId }
+  : null // o { id: 'P1' } si luego lo manejas
   };
+
+  const nombreProyecto = this.asesoria.projectId
+  ? this.proyectos.find(p => p.id === this.asesoria.projectId)?.nombre
+  : 'Sin proyecto seleccionado';
 
   this.advisoryService.create(advisory).subscribe({
     next: () => {
@@ -177,6 +208,7 @@ agendarAsesoria() {
         fecha: this.asesoria.fecha,
         hora: this.asesoria.hora,
         mensaje: this.asesoria.mensaje,
+        proyecto: nombreProyecto, 
         correo_destino: this.programadorSeleccionado.email
       });
 
@@ -187,11 +219,12 @@ agendarAsesoria() {
         fecha: this.asesoria.fecha,
         hora: this.asesoria.hora,
         mensaje: this.asesoria.mensaje,
+        proyecto: nombreProyecto, 
         correo_destino: this.asesoria.correo
       });
 
       // UI
-      this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '' };
+      this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '', projectId: '' };
       this.mostrarModal = false;
       this.mostrarConfirmacion = true;
       this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';

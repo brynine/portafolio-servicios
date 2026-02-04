@@ -92,6 +92,7 @@ export class Portafolio implements OnInit, OnDestroy {
         console.log('USUARIO BACKEND:', u);
 
         this.cargarAsesorias();
+        this.cargarProyectosDesdeBackend();
       },
       error: (err) => {
         console.error('ERROR BACKEND:', err);
@@ -157,15 +158,28 @@ export class Portafolio implements OnInit, OnDestroy {
     this.vista = 'proyectos';
   }
 
-  actualizarProyecto() {
-    this.projectService.update(this.proyectoEditando.id, this.proyectoEditando)
-      .subscribe(() => {
+actualizarProyecto() {
+
+  const proyectoActualizado = {
+    ...this.proyectoEditando,
+    tipo: this.proyectoEditando.tipo.toUpperCase(),
+  };
+
+  this.projectService.update(this.proyectoEditando.id, proyectoActualizado)
+    .subscribe({
+      next: () => {
         this.mostrarMensaje('✔ Proyecto actualizado');
         this.proyectoEditando = null;
         this.vista = 'proyectos';
         this.cargarProyectosDesdeBackend();
-      });
-  }
+      },
+      error: (err) => {
+        console.error(err);
+        this.mostrarMensaje('❌ Error al actualizar el proyecto');
+      }
+    });
+}
+
 
   confirmarEliminarProyecto(id: string) {
     this.preguntar('⚠ ¿Eliminar este proyecto?', async () => {
@@ -285,10 +299,48 @@ async eliminarAsesoria(id: string) {
     this.mostrarModalConfirmacion = false;
   }
 
-  guardarProyecto() {
-  console.warn(
-    'guardarProyecto deshabilitado: migración a backend en progreso'
-  );
-}
+guardarProyecto() {
+  const userId = this.auth.currentUserData?.backendId;
 
+  if (!userId) {
+    this.mostrarMensaje('❌ Usuario no autenticado');
+    return;
+  }
+
+  const proyecto = {
+    nombre: this.nuevoProyecto.nombre,
+    descripcion: this.nuevoProyecto.descripcion,
+    tipo: this.nuevoProyecto.tipo.toUpperCase(),
+    participacion: this.nuevoProyecto.participacion,
+    tecnologias: this.nuevoProyecto.tecnologias
+      ? this.nuevoProyecto.tecnologias.split(',').map(t => t.trim())
+      : [],
+    repositorio: this.nuevoProyecto.repositorio || 'N/T',
+    deploy: this.nuevoProyecto.deploy || 'N/T',
+    user: {
+      id: userId
+    }
+  };
+
+  this.projectService.create(proyecto as any).subscribe({
+    next: () => {
+      this.mostrarMensaje('✔ Proyecto guardado correctamente');
+      this.nuevoProyecto = {
+        nombre: '',
+        descripcion: '',
+        tipo: 'academico',
+        participacion: '',
+        tecnologias: '',
+        repositorio: '',
+        deploy: ''
+      };
+      this.vista = 'proyectos';
+      this.cargarProyectosDesdeBackend();
+    },
+    error: (err) => {
+      console.error(err);
+      this.mostrarMensaje('❌ Error al guardar el proyecto');
+    }
+  });
+}
 }

@@ -15,6 +15,10 @@
 
       <button (click)="vista = 'lista'" [class.activo]="vista === 'lista'">📋 Programadores</button>
 
+      <button (click)="mostrarDashboard()" [class.activo]="vista === 'dashboard'">
+        📊 DASHBOARD
+      </button>
+
       <button (click)="vista = 'horarios'" [class.activo]="vista === 'horarios'">
         🕒 Horarios
       </button>
@@ -76,6 +80,41 @@
         <button class="btn-primary" type="submit">Guardar Cambios</button>
         <button class="btn-secundario" type="button" (click)="vista = 'lista'">Cancelar</button>
       </form>
+    </div>
+
+    <div *ngIf="vista === 'dashboard'" class="seccion dashboard">
+      <h2 class="titulo">Dashboard de Asesorías</h2>
+
+      <!-- KPIs -->
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <h3>Total de asesorías</h3>
+          <p class="numero">{{ totalAsesorias }}</p>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="dashboard-grid">
+        <div class="chart-box">
+          <h3>Asesorías por programador</h3>
+          <canvas id="chartProgramadores"></canvas>
+        </div>
+
+        <div class="chart-box small">
+          <h3>Estado de asesorías</h3>
+          <canvas id="chartEstado"></canvas>
+        </div>
+      </div>
+
+      <!-- Lista -->
+      <div class="lista-stats">
+        <h3>Detalle por programador</h3>
+        <ul>
+          <li *ngFor="let p of statsProgramador">
+            {{ p[0] }}: <strong>{{ p[1] }}</strong>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- HORARIOS -->

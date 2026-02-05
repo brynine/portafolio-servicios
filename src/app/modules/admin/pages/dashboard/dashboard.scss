@@ -392,3 +392,46 @@ html, body {
     margin: auto;
   }
 }
+
+.chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.kpi-container {
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+  .kpi-container {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-box {
+    height: 280px;
+  }
+
+  .chart-box.small {
+    height: 240px;
+  }
+}
+
+/* contenedor real del canvas */
+.chart-box {
+  position: relative;
+  max-height: 320px;
+  overflow: hidden;
+}
+
+/* canvas controlado */
+.chart-box canvas {
+  max-height: 260px !important;
+}
+

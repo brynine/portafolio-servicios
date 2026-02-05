@@ -50,4 +50,22 @@ updateEstado(id: string, estado: string) {
   );
 }
 
+  // 📊 DASHBOARD (ESTADÍSTICAS)
+  getTotalAsesorias() {
+    return this.http.get<number>(`${this.apiBaseUrl}/stats/total`);
+  }
+
+  getStatsProgramadores() {
+    return this.http.get<any[]>(`${this.apiBaseUrl}/stats/programadores`);
+  }
+
+  getStatsEstado() {
+    return this.http.get<any[]>(`${this.apiBaseUrl}/stats/estado`);
+  }
+
+  getStatsMes() {
+    return this.http.get<any[]>(`${this.apiBaseUrl}/stats/mes`);
+  }
+
+
 }

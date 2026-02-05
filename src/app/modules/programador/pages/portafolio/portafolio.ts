@@ -21,6 +21,7 @@ import { initializeApp } from 'firebase/app';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { AvailabilityService } from '../../../../core/services/availability.service';
 
 @Component({
   selector: 'app-portafolio',
@@ -49,6 +50,13 @@ export class Portafolio implements OnInit, OnDestroy {
   deploy: ''
 };
 
+disponibilidad = {
+  dia: '',
+  horaInicio: '',
+  horaFin: ''
+};
+
+  disponibilidades: any[] = [];
   proyectosAcademicos: any[] = [];
   proyectosLaborales: any[] = [];
   proyectosFiltrados: any[] = [];
@@ -73,7 +81,8 @@ export class Portafolio implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private advisoryService: AdvisoryService,
     private notificationService: NotificationService,
-    private userService: UserService
+    private userService: UserService,
+    private availabilityService: AvailabilityService
   ) {
   }
 
@@ -102,6 +111,7 @@ ngOnInit() {
         this.cargarAsesorias();
         this.cargarProyectosDesdeBackend();
         this.cargarNotificaciones();
+        this.cargarDisponibilidades();
       },
       error: (err) => {
         console.error('ERROR BACKEND:', err);
@@ -190,14 +200,28 @@ actualizarProyecto() {
     });
 }
 
-  confirmarEliminarProyecto(id: string) {
-    this.preguntar('⚠ ¿Eliminar este proyecto?', async () => {
-      this.projectService.delete(id).subscribe(() => {
+confirmarEliminarProyecto(id: string) {
+  this.preguntar('⚠ ¿Eliminar este proyecto?', () => {
+
+    this.projectService.delete(id).subscribe({
+      next: () => {
         this.mostrarMensaje('🗑 Proyecto eliminado');
         this.cargarProyectosDesdeBackend();
-      });
+      },
+      error: (err) => {
+
+        // 👇 MENSAJE DE NEGOCIO DESDE BACKEND
+        if (err.status === 409) {
+          this.mostrarMensaje(err.error);
+        } else {
+          this.mostrarMensaje('❌ Error al eliminar el proyecto');
+        }
+      }
     });
-  }
+
+  });
+}
+
 
   /* =====================================================
      📬 ASESORÍAS
@@ -476,8 +500,6 @@ marcarComoLeido(a: any) {
   });
 }
 
-
-
 cargarNotificaciones() {
   const userId = this.auth.currentUserData?.backendId;
   if (!userId) return;
@@ -489,6 +511,39 @@ cargarNotificaciones() {
     },
     error: (err) => console.error(err)
   });
+}
+
+cargarDisponibilidades() {
+  if (!this.userBackendId) return;
+
+  this.availabilityService
+    .getByUser(this.userBackendId)
+    .subscribe(d => this.disponibilidades = d);
+}
+
+guardarDisponibilidad() {
+  const payload = {
+    ...this.disponibilidad,
+    user: { id: this.userBackendId }
+  };
+
+  this.availabilityService.create(payload as any)
+    .subscribe(() => {
+      this.mostrarMensaje('✔ Disponibilidad guardada');
+      this.disponibilidad = {
+        dia: '',
+        horaInicio: '',
+        horaFin: ''
+      };
+      this.cargarDisponibilidades();
+    });
+}
+
+
+
+eliminarDisponibilidad(id: string) {
+  this.availabilityService.delete(id)
+    .subscribe(() => this.cargarDisponibilidades());
 }
 
 

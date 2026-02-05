@@ -15,9 +15,12 @@
     <button (click)="vista = 'proyectos'" [class.activo]="vista === 'proyectos'">
       📁 Mis Proyectos
     </button>
+    <button (click)="vista = 'disponibilidad'" [class.activo]="vista === 'disponibilidad'">
+      ⏰ Mi Disponibilidad
+    </button>
     <button (click)="vista = 'asesorias'" [class.activo]="vista === 'asesorias'">
       📬 Mis Asesorías
-    </button>
+    </button> 
     <button (click)="vista = 'perfil'" [class.activo]="vista === 'perfil'">👤 Mi Perfil</button>
   </div>
 
@@ -194,6 +197,44 @@
             🗑 Eliminar
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- seccion: disponibilidad -->
+    <div *ngIf="vista === 'disponibilidad'" class="seccion">
+      <h3>Mi Disponibilidad</h3>
+
+      <form (ngSubmit)="guardarDisponibilidad()" class="formulario">
+        <label>Día</label>
+        <select [(ngModel)]="disponibilidad.dia" name="dia" required>
+          <option value="">Seleccione un día</option>
+          <option>LUNES</option>
+          <option>MARTES</option>
+          <option>MIERCOLES</option>
+          <option>JUEVES</option>
+          <option>VIERNES</option>
+          <option>SABADO</option>
+        </select>
+
+        <label>Hora inicio</label>
+        <input type="time" [(ngModel)]="disponibilidad.horaInicio" name="horaInicio" required />
+
+        <label>Hora fin</label>
+        <input type="time" [(ngModel)]="disponibilidad.horaFin" name="horaFin" required />
+
+        <button type="submit" class="btn-guardar">Guardar disponibilidad</button>
+      </form>
+
+      <hr />
+
+      <div *ngIf="disponibilidades.length === 0">No tienes horarios registrados aún</div>
+
+      <div class="tarjeta" *ngFor="let d of disponibilidades">
+        <p>
+          <strong>{{ d.dia }}</strong> | {{ d.horaInicio }} - {{ d.horaFin }}
+        </p>
+
+        <button class="eliminar-btn" (click)="eliminarDisponibilidad(d.id)">🗑 Eliminar</button>
       </div>
     </div>
 

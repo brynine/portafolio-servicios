@@ -22,6 +22,7 @@ import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AvailabilityService } from '../../../../core/services/availability.service';
+import { EmailService } from '../../../../core/services/email.service';
 
 @Component({
   selector: 'app-portafolio',
@@ -74,15 +75,15 @@ disponibilidad = {
   notificaciones: any[] = [];
   asesoriasFinales: any[] = [];
   mapaNotificaciones = new Map<string, Notification>();
-
-
+  
   constructor(
     private auth: AuthService,
     private projectService: ProjectService,
     private advisoryService: AdvisoryService,
     private notificationService: NotificationService,
     private userService: UserService,
-    private availabilityService: AvailabilityService
+    private availabilityService: AvailabilityService,
+    private emailService: EmailService
   ) {
   }
 
@@ -95,7 +96,6 @@ ngOnInit() {
       return;
     }
 
-    // ✅ ESTA LÍNEA FALTABA
     this.userBackendId = user.backendId;
 
     console.log('BackendId detectado:', this.userBackendId);
@@ -106,7 +106,6 @@ ngOnInit() {
 
         this.googlePhoto = user.photo || null;
 
-        // 🔥 AHORA SÍ
         this.cargarPerfilDesdeBackend();
         this.cargarAsesorias();
         this.cargarProyectosDesdeBackend();
@@ -120,13 +119,11 @@ ngOnInit() {
   });
 }
 
-
   ngOnDestroy() {}
 
   /* =====================================================
-     📦 PROYECTOS DESDE BACKEND (JAKARTA EE)
+     PROYECTOS DESDE BACKEND (JAKARTA EE)
      ===================================================== */
-
   cargarProyectosDesdeBackend() {
 
   const userId = this.auth.currentUserData?.backendId;
@@ -210,7 +207,6 @@ confirmarEliminarProyecto(id: string) {
       },
       error: (err) => {
 
-        // 👇 MENSAJE DE NEGOCIO DESDE BACKEND
         if (err.status === 409) {
           this.mostrarMensaje(err.error);
         } else {
@@ -222,9 +218,8 @@ confirmarEliminarProyecto(id: string) {
   });
 }
 
-
   /* =====================================================
-     📬 ASESORÍAS
+     ASESORÍAS
      ===================================================== */
 
 cargarAsesorias() {
@@ -234,22 +229,20 @@ cargarAsesorias() {
     return;
   }
 
-  // 1️⃣ Asesorías del programador
+  // Asesorías del programador
   this.advisoryService.getByProgramador(this.userBackendId).subscribe({
     next: (asesorias) => {
 
       console.log('ASESORÍAS BACKEND:', asesorias);
       this.asesorias = asesorias;
 
-      // 2️⃣ Notificaciones del mismo usuario
+      // Notificaciones del mismo usuario
       this.notificationService.getByUser(this.userBackendId).subscribe({
         next: (nots) => {
 
           console.log('NOTIFICACIONES:', nots);
           this.notificaciones = nots;
 
-          // 3️⃣ Mapa mensaje → notificación
-          // 3️⃣ Mapa advisoryId → notificación
 this.mapaNotificaciones.clear();
 nots.forEach(n => {
   if (n.advisoryId) {
@@ -257,7 +250,6 @@ nots.forEach(n => {
   }
 });
 
-// 4️⃣ Fusionar datos usando advisoryId
 this.asesoriasFinales = asesorias.map(a => {
   const notif = this.mapaNotificaciones.get(a.id);
 
@@ -279,25 +271,80 @@ console.log('ASESORÍAS FINALES:', this.asesoriasFinales);
   });
 }
 
-responder(id: string, estado: string) {
-  this.advisoryService.updateEstado(id, estado).subscribe({
+responder(asesoria: any, estado: 'CONFIRMADA' | 'RECHAZADA') {
+
+  if (!asesoria?.id) {
+    console.warn('Asesoría inválida');
+    return;
+  }
+
+  this.advisoryService.updateEstado(asesoria.id, estado).subscribe({
     next: () => {
 
-      // 🔥 ACTUALIZAR EN asesoriasFinales
-      const asesoria = this.asesoriasFinales.find(a => a.id === id);
-      if (asesoria) {
-        asesoria.estado = estado;
-      }
+      asesoria.estado = estado;
 
-      this.mostrarMensaje(`✔ Asesoría ${estado}`);
+      const titulo =
+        estado === 'CONFIRMADA'
+          ? '✅ Asesoría confirmada'
+          : '❌ Asesoría rechazada';
+
+      const estadoTexto =
+        estado === 'CONFIRMADA'
+          ? 'Tu asesoría ha sido confirmada'
+          : 'Tu asesoría ha sido rechazada';
+
+      const estadoColor =
+        estado === 'CONFIRMADA'
+          ? '#2ecc71' 
+          : '#e74c3c'; 
+
+      const mensajeUsuario =
+        estado === 'CONFIRMADA'
+          ? 'El programador confirmó tu asesoría.'
+          : 'El programador no podrá atender en el horario solicitado.';
+
+      /* =========================
+         CORREO AL USUARIO
+         ========================= */
+      this.emailService.enviarCorreo({
+        correo_destino: asesoria.correoCliente,
+        to_name: asesoria.nombreCliente,
+        titulo,
+        estado_texto: estadoTexto,
+        estado_color: estadoColor,
+        fecha: asesoria.fecha,
+        hora: asesoria.hora,
+        proyecto: asesoria.project?.nombre || 'Sin proyecto seleccionado',
+        mensaje: mensajeUsuario
+      });
+
+      /* =========================
+         CORREO AL PROGRAMADOR
+         ========================= */
+      this.userService.getById(asesoria.user.id).subscribe(programador => {
+
+        this.emailService.enviarCorreo({
+          correo_destino: programador.email,
+          to_name: programador.nombre,
+          titulo,
+          estado_texto: estadoTexto,
+          estado_color: estadoColor,
+          fecha: asesoria.fecha,
+          hora: asesoria.hora,
+          proyecto: asesoria.project?.nombre || 'Sin proyecto seleccionado',
+          mensaje: asesoria.mensaje
+        });
+
+      });
+
+      this.mostrarMensaje(`✔ Asesoría ${estado.toLowerCase()}`);
     },
     error: (err) => {
       console.error(err);
-      this.mostrarMensaje('❌ Error al actualizar asesoría');
+      this.mostrarMensaje('❌ Error al actualizar la asesoría');
     }
   });
 }
-
 
 eliminarAsesoria(id: string) {
   this.advisoryService.delete(id).subscribe({
@@ -318,7 +365,7 @@ eliminarAsesoria(id: string) {
   });
 }
   /* =====================================================
-     👤 PERFIL
+     PERFIL
      ===================================================== */
 cargarPerfilDesdeBackend() {
   const backendId = this.auth.currentUserData?.backendId;
@@ -350,7 +397,6 @@ this.perfil = {
     }
   });
 }
-
 
 guardarPerfil() {
   const backendId = this.auth.currentUserData?.backendId;
@@ -410,7 +456,7 @@ guardarPerfil() {
   }
 
   /* =====================================================
-     🔔 MODALES
+     MODALES
      ===================================================== */
 
   mostrarMensaje(texto: string) {
@@ -484,13 +530,14 @@ marcarComoLeido(a: any) {
   console.log('Marcando como leído:', a);
 
   if (!a.notificationId) {
-    console.warn('No hay notificationId');
+    console.warn('Esta asesoría no tiene notificación asociada');
+    this.mostrarMensaje('Esta asesoría no tiene notificación pendiente');
     return;
   }
 
   this.notificationService.marcarLeido(a.notificationId).subscribe({
     next: () => {
-      a.leido = true; // 🔥 actualiza UI
+      a.leido = true;
       this.mostrarMensaje('✔ Marcada como leída');
     },
     error: (err) => {
@@ -539,12 +586,9 @@ guardarDisponibilidad() {
     });
 }
 
-
-
 eliminarDisponibilidad(id: string) {
   this.availabilityService.delete(id)
     .subscribe(() => this.cargarDisponibilidades());
 }
-
 
 }

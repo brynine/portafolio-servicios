@@ -20,7 +20,7 @@
     </button>
     <button (click)="vista = 'asesorias'" [class.activo]="vista === 'asesorias'">
       📬 Mis Asesorías
-    </button> 
+    </button>
     <button (click)="vista = 'perfil'" [class.activo]="vista === 'perfil'">👤 Mi Perfil</button>
   </div>
 
@@ -177,18 +177,21 @@
         </p>
 
         <div class="acciones">
-          <!-- 1️⃣ SOLO cuando NO está leída -->
-          <button *ngIf="!a.leido" class="btn-leido" (click)="marcarComoLeido(a)">
+          <button
+            *ngIf="!a.leido && a.notificationId"
+            class="btn-secundario"
+            (click)="marcarComoLeido(a)"
+          >
             ✔ Marcar como leído
           </button>
 
-          <!-- 2️⃣ SOLO cuando ya está leída y sigue pendiente -->
+          <!--SOLO cuando ya está leída y sigue pendiente -->
           <ng-container *ngIf="a.leido && a.estado === 'PENDIENTE'">
-            <button (click)="responder(a.id, 'CONFIRMADA')">✔ Aprobar</button>
-            <button (click)="responder(a.id, 'RECHAZADA')">✖ Rechazar</button>
+            <button (click)="responder(a, 'CONFIRMADA')">Confirmar</button>
+            <button (click)="responder(a, 'RECHAZADA')">Rechazar</button>
           </ng-container>
 
-          <!-- 3️⃣ SOLO cuando ya NO está pendiente -->
+          <!--SOLO cuando ya NO está pendiente -->
           <button
             *ngIf="a.leido && a.estado !== 'PENDIENTE'"
             class="eliminar-btn"

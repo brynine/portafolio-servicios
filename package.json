@@ -36,9 +36,13 @@
     "chart.js": "^4.5.1",
     "emailjs-com": "^3.2.0",
     "express": "^5.1.0",
+    "file-saver": "^2.0.5",
     "firebase": "^12.6.0",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

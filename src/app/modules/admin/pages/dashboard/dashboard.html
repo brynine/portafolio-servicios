@@ -7,7 +7,7 @@
 
 <div class="admin-canvas">
   <div class="admin-card">
-    <!-- menú -->
+    <!-- MENU -->
     <div class="menu-admin">
       <button (click)="vista = 'crear'" [class.activo]="vista === 'crear'">
         ➕ Crear Programador
@@ -82,8 +82,16 @@
       </form>
     </div>
 
+    <!-- Seccion Dashboard -->
     <div *ngIf="vista === 'dashboard'" class="seccion dashboard">
-      <h2 class="titulo">Dashboard de Asesorías</h2>
+      <!-- Header -->
+      <div class="dashboard-header">
+        <h2 class="titulo">Dashboard de Asesorías</h2>
+
+        <!-- BOTÓN PDF -->
+        <button class="btn-pdf" (click)="exportarAsesoriasPDF()">📄 Descargar reporte PDF</button>
+        <button class="btn-pdf secondary" (click)="exportarProyectosPDF()">📁 Proyectos PDF</button>
+      </div>
 
       <!-- KPIs -->
       <div class="kpi-container">

@@ -435,3 +435,33 @@ html, body {
   max-height: 260px !important;
 }
 
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-pdf {
+  background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-pdf:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 77, 77, 0.6);
+}
+
+.btn-pdf.secondary {
+  background: linear-gradient(135deg, #00c853, #00a844);
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.4);
+}
+
+

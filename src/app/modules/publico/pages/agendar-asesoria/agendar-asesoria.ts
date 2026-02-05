@@ -173,12 +173,12 @@ const data = {
   estado: 'PENDIENTE',
 
   user: {
-    id: this.programadorId // 👈 programador
+    id: this.programadorId
   },
 
   project: this.asesoria.projectId
     ? { id: this.asesoria.projectId }
-    : null, // 👈 OPCIONAL
+    : null,
 
   creadaEn: new Date()
 };
@@ -188,7 +188,6 @@ const data = {
 
     alert('Asesoría solicitada correctamente');
 
-    // limpia formulario
     this.asesoria = {
       nombre: '',
       correo: '',

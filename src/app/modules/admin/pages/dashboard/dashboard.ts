@@ -10,6 +10,9 @@ import { environment } from '../../../../../environments/environment';
 import { initializeApp } from 'firebase/app';
 import { Chart } from 'chart.js/auto';
 import { AdvisoryService } from '../../../../core/services/advisory.service';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { ProjectService } from '../../../../core/services/project.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,9 +34,9 @@ chartEstado: Chart | null = null;
 statsEstado: any[] = [];
 statsProgramador: any[] = [];
 
-
   constructor(private userService: UserService,
   private advisoryService: AdvisoryService, 
+  private projectService: ProjectService,
   private availabilityService: AvailabilityService) {}
 
   nuevoProgramador = {
@@ -62,14 +65,12 @@ statsProgramador: any[] = [];
   async ngOnInit() {
   await this.cargarProgramadores();
 
-  // solo datos
   this.cargarTotal();
   this.cargarEstado();
   this.cargarProgramador();
 }
 
-
-  crearProgramador() {
+crearProgramador() {
   this.userService.crearProgramador({
     email: this.nuevoProgramador.email,
     nombre: this.nuevoProgramador.name,
@@ -83,7 +84,7 @@ statsProgramador: any[] = [];
   });
 }
 
-  cargarProgramadores() {
+cargarProgramadores() {
   this.userService.getProgramadores().subscribe({
     next: (data) => {
       this.programadores = data;
@@ -95,13 +96,11 @@ statsProgramador: any[] = [];
   });
 }
 
-  // habilita modo edición
   editarProgramador(p: any) {
     this.programadorEditando = { ...p };
     this.vista = 'editar';
   }
 
-  // guarda cambios del programador editado
   actualizarProgramador() {
   const data = {
     id: this.programadorEditando.id,
@@ -121,7 +120,6 @@ statsProgramador: any[] = [];
     });
 }
 
-  // mensaje de confirmación antes de eliminar
   eliminarProgramador(id: string) {
     this.preguntar("¿Seguro que deseas eliminar este programador?", async () => {
       console.log('ID recibido para eliminar:', id);
@@ -129,7 +127,6 @@ statsProgramador: any[] = [];
     });
   }
 
-  // elimina programador definitivamente
 eliminarProgramadorConfirmado(id: string) {
   this.userService.delete(id).subscribe({
     next: () => {
@@ -139,7 +136,6 @@ eliminarProgramadorConfirmado(id: string) {
     error: (err) => {
       console.error(err);
 
-      // 🔥 MENSAJE DESDE BACKEND
       const mensaje =
         err?.error && typeof err.error === 'string'
           ? err.error
@@ -150,7 +146,6 @@ eliminarProgramadorConfirmado(id: string) {
   });
 }
 
-  // agrega horario para un programador
     guardarHorario() {
     if (!this.programadorSeleccionado) return;
 
@@ -184,7 +179,6 @@ eliminarProgramadorConfirmado(id: string) {
   });
 }
 
-  // carga horarios del programador seleccionado
   cargarHorariosProgramador() {
   if (!this.programadorSeleccionado) return;
 
@@ -227,7 +221,6 @@ actualizarHorario() {
     });
 }
 
-  // activa modo edición de horario
   editarHorario(horario: any) {
     this.modoEditarHorario = true;
     this.horarioEditando = { ...horario };
@@ -238,7 +231,6 @@ actualizarHorario() {
     this.horarioEditando = null;
   }
 
-  // elimina horario con confirmación
   eliminarHorarioConfirmado(id: string) {
   this.availabilityService.delete(id).subscribe({
     next: () => {
@@ -251,7 +243,6 @@ actualizarHorario() {
   });
 }
 
-  // recarga horarios cuando cambia programador
   cambiarProgramador() {
   if (this.programadorSeleccionado) {
     this.cargarHorariosProgramador();
@@ -274,13 +265,13 @@ actualizarHorario() {
   }
 
   // ejecuta acción confirmada
-  confirmarAccion() {
+confirmarAccion() {
     if (this.accionPendiente) this.accionPendiente();
     this.accionPendiente = null;
     this.mostrarModalConfirmacion = false;
   }
 
-  cancelarAccion() {
+cancelarAccion() {
     this.accionPendiente = null;
     this.mostrarModalConfirmacion = false;
   }
@@ -307,7 +298,6 @@ mostrarDashboard() {
   this.vista = 'dashboard';
 
   setTimeout(() => {
-    // aseguramos que los datos estén cargados
     if (!this.statsProgramador.length) {
       this.cargarProgramador();
     }
@@ -316,7 +306,6 @@ mostrarDashboard() {
       this.cargarEstado();
     }
 
-    // pequeño delay para que Angular pinte el canvas
     setTimeout(() => {
       this.crearGraficoProgramadores();
       this.crearGraficoEstado();
@@ -325,11 +314,9 @@ mostrarDashboard() {
   }, 0);
 }
 
-
 crearGraficoProgramadores() {
   const canvas = document.getElementById('chartProgramadores') as HTMLCanvasElement;
 
-  // validaciones básicas
   if (!canvas) {
     console.warn('Canvas chartProgramadores no encontrado');
     return;
@@ -340,7 +327,6 @@ crearGraficoProgramadores() {
     return;
   }
 
-  // destruir gráfico previo si existe
   if (this.chartProgramadores) {
     this.chartProgramadores.destroy();
   }
@@ -348,11 +334,11 @@ crearGraficoProgramadores() {
   this.chartProgramadores = new Chart(canvas, {
     type: 'bar',
     data: {
-      labels: this.statsProgramador.map(p => p[0]), // nombre programador
+      labels: this.statsProgramador.map(p => p[0]),
       datasets: [
         {
           label: 'Asesorías',
-          data: this.statsProgramador.map(p => p[1]), // cantidad
+          data: this.statsProgramador.map(p => p[1]),
           backgroundColor: 'rgba(107, 77, 255, 0.7)',
           borderColor: 'rgba(107, 77, 255, 1)',
           borderWidth: 2,
@@ -362,8 +348,8 @@ crearGraficoProgramadores() {
     },
     options: {
   responsive: true,
-  maintainAspectRatio: false, // 🔑 CLAVE
-  aspectRatio: 2,             // 🔥 controla ancho/alto
+  maintainAspectRatio: false, 
+  aspectRatio: 2,          
   plugins: {
     legend: {
       labels: {
@@ -386,7 +372,6 @@ crearGraficoProgramadores() {
   });
 }
 
-
 crearGraficoEstado() {
   const canvas = document.getElementById('chartEstado') as HTMLCanvasElement;
   if (!canvas || !this.statsEstado.length) return;
@@ -395,13 +380,125 @@ crearGraficoEstado() {
     this.chartEstado.destroy();
   }
 
-  this.chartEstado = new Chart(canvas, {
+this.chartEstado = new Chart(canvas, {
     type: 'pie',
     data: {
       labels: this.statsEstado.map(e => e[0]),
       datasets: [{
         data: this.statsEstado.map(e => e[1])
       }]
+    }
+  });
+}
+
+exportarAsesoriasPDF() {
+
+  this.advisoryService.getAll().subscribe({
+    next: (asesorias) => {
+
+      const doc = new jsPDF('landscape');
+
+      doc.setFontSize(18);
+      doc.text('Reporte de Asesorías', 14, 15);
+
+      doc.setFontSize(11);
+      doc.text(
+        `Fecha de generación: ${new Date().toLocaleString()}`,
+        14,
+        23
+      );
+
+      const columnas = [
+        'Programador',
+        'Cliente',
+        'Correo',
+        'Fecha',
+        'Hora',
+        'Estado',
+        'Proyecto'
+      ];
+
+      const filas = asesorias.map((a: any) => [
+        a.user?.nombre || 'N/A',
+        a.nombreCliente,
+        a.correoCliente,
+        a.fecha,
+        a.hora,
+        a.estado,
+        a.project ? a.project.nombre : 'Sin proyecto'
+      ]);
+
+      autoTable(doc, {
+        head: [columnas],
+        body: filas,
+        startY: 30,
+        styles: {
+          fontSize: 9
+        },
+        headStyles: {
+          fillColor: [107, 77, 255]
+        }
+      });
+
+      doc.save('reporte_asesorias.pdf');
+    },
+    error: () => {
+      this.mostrarMensaje('❌ Error al generar el reporte de asesorías');
+    }
+  });
+}
+
+exportarProyectosPDF() {
+
+  this.projectService.getAll().subscribe({
+    next: (proyectos) => {
+
+      const doc = new jsPDF('landscape');
+
+      doc.setFontSize(18);
+      doc.text('Reporte de Proyectos', 14, 15);
+
+      doc.setFontSize(11);
+      doc.text(
+        `Fecha de generación: ${new Date().toLocaleString()}`,
+        14,
+        23
+      );
+
+      const columnas = [
+        'Usuario',
+        'Proyecto',
+        'Tipo',
+        'Tecnologías',
+        'Repositorio',
+        'Deploy'
+      ];
+
+      const filas = proyectos.map((p: any) => [
+        p.user?.nombre || 'N/A',
+        p.nombre,
+        p.tipo,
+        Array.isArray(p.tecnologias) ? p.tecnologias.join(', ') : '',
+        p.repositorio || 'N/T',
+        p.deploy || 'N/T'
+      ]);
+
+      autoTable(doc, {
+        head: [columnas],
+        body: filas,
+        startY: 30,
+        styles: {
+          fontSize: 9
+        },
+        headStyles: {
+          fillColor: [76, 175, 80]
+        }
+      });
+
+      doc.save('reporte_proyectos.pdf');
+    },
+    error: () => {
+      this.mostrarMensaje('❌ Error al generar el reporte de proyectos');
     }
   });
 }

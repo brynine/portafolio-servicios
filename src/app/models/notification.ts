@@ -3,9 +3,7 @@ export interface Notification {
   mensaje: string;
   fecha: string;
   leido: boolean;
-
   advisoryId?: string;
-
   user: {
     id: string;
   };

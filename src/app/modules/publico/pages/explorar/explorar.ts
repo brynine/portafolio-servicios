@@ -69,6 +69,7 @@ programadores: UserWithPhoto[] = [];
   asesoria = {
     nombre: '',
     correo: '',
+    telefono: '',
     fecha: '',
     hora: '',
     mensaje: '',
@@ -83,16 +84,16 @@ async cargarProgramadores() {
   this.cargando = true;
 
   try {
-    // 1️⃣ programadores desde backend
+    // programadores desde backend
     const programadoresBackend = await this.userService
       .getProgramadores()
       .toPromise();
 
-    // 2️⃣ usuarios desde Firestore
+    // usuarios desde Firestore
     const snap = await getDocs(collection(getFirestore(), 'users'));
     const usuariosFirestore = snap.docs.map(d => d.data());
 
-    // 3️⃣ merge por email
+    // merge por email
     this.programadores = programadoresBackend!.map((p: any) => {
       const match = usuariosFirestore.find(
         (u: any) =>
@@ -113,7 +114,6 @@ async cargarProgramadores() {
     this.cargando = false;
   }
 }
-
 
 cargarHorarios(userId: string) {
   this.availabilityService.getByUser(userId).subscribe({
@@ -176,13 +176,10 @@ async verPerfil(p: any) {
   });
 }
 
-
-
 cerrarPerfil() {
   this.mostrarPerfil = false;
   this.perfilCompleto = null;
 }
-
 
 seleccionarProgramador(p: User) {
   this.programadorSeleccionado = p;
@@ -193,13 +190,13 @@ seleccionarProgramador(p: User) {
   this.mostrarModal = true;
 }
 
-
   cerrarModal() {
     this.mostrarModal = false;
 
     this.asesoria = {
       nombre: '',
       correo: '',
+      telefono: '',
       fecha: '',
       hora: '',
       mensaje: '',
@@ -254,122 +251,43 @@ agendarAsesoria() {
   ? this.proyectos.find(p => p.id === this.asesoria.projectId)?.nombre
   : 'Sin proyecto seleccionado';
 
-  this.advisoryService.create(advisory).subscribe({
-    next: () => {
+this.advisoryService.create(advisory).subscribe({
+  next: () => {
 
-      // correo al programador
-      this.emailService.enviarCorreoProgramador({
-        to_name: this.programadorSeleccionado.nombre,
-        cliente: this.asesoria.nombre,
-        correo: this.asesoria.correo,
-        fecha: this.asesoria.fecha,
-        hora: this.asesoria.hora,
-        mensaje: this.asesoria.mensaje,
-        proyecto: nombreProyecto, 
-        correo_destino: this.programadorSeleccionado.email
-      });
-
-      // copia al usuario
-      this.emailService.enviarCorreoUsuario({
-        cliente: this.asesoria.nombre,
-        correo: this.asesoria.correo,
-        fecha: this.asesoria.fecha,
-        hora: this.asesoria.hora,
-        mensaje: this.asesoria.mensaje,
-        proyecto: nombreProyecto, 
-        correo_destino: this.asesoria.correo
-      });
-
-      // UI
-      this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '', projectId: '' };
-      this.mostrarModal = false;
-      this.mostrarConfirmacion = true;
-      this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';
-    },
-    error: (err) => {
-      console.error(err);
-      alert('Error al registrar la asesoría');
-    }
-  });
-}
-
-  // método completo para guardar asesoría y enviar correos
-  /*async agendarAsesoria() {
-
-    // validación de disponibilidad
-    if (this.mensajeHora) {
-      alert(this.mensajeHora);
-      return;
-    }
-
-    if (!this.asesoria.hora) {
-      alert("Debe ingresar una hora válida.");
-      return;
-    }
-
-    const asesoriasRef = collection(this.firestore, 'asesorias');
-
-    // guarda asesoría en firestore
-    await addDoc(asesoriasRef, {
-      ...this.asesoria,
-      programadorId: this.programadorSeleccionado.uid,
-      estado: 'pendiente',
-      creadaEn: new Date()
+    // CORREO AL PROGRAMADOR
+    this.emailService.enviarCorreo({
+      correo_destino: this.programadorSeleccionado.email,
+      to_name: this.programadorSeleccionado.nombre,
+      titulo: '📩 Nueva solicitud de asesoría',
+      estado: 'PENDIENTE',
+      cliente: this.asesoria.nombre,
+      email: this.asesoria.correo,
+      fecha: this.asesoria.fecha,
+      hora: this.asesoria.hora,
+      proyecto: nombreProyecto,
+      mensaje: this.asesoria.mensaje
     });
 
-    // envío de correo al programador
-    /*console.log("Enviando correo al programador:", this.programadorSeleccionado.email);
-    this.emailService.enviarCorreoProgramador({
-      to_name: this.programadorSeleccionado?.nombre || "Programador",
+    // CORREO AL USUARIO (COPIA)
+    this.emailService.enviarCorreo({
+      correo_destino: this.asesoria.correo,
+      to_name: this.asesoria.nombre,
+      titulo: '✅ Solicitud enviada correctamente',
+      estado: 'PENDIENTE',
       cliente: this.asesoria.nombre,
-      correo: this.asesoria.correo,
+      email: this.asesoria.correo,
       fecha: this.asesoria.fecha,
       hora: this.asesoria.hora,
-      mensaje: this.asesoria.mensaje,
-      correo_destino: this.programadorSeleccionado.email 
-    })
-    .then(() => console.log("Correo enviado al programador"))
-    .catch(err => console.error("Error programador:", err));
+      proyecto: nombreProyecto,
+      mensaje: this.asesoria.mensaje
+    });
 
-    // copia para el usuario
-    console.log("Enviando copia al usuario:", this.asesoria.correo);
-    this.emailService.enviarCorreoUsuario({
-      cliente: this.asesoria.nombre,
-      correo: this.asesoria.correo,
-      fecha: this.asesoria.fecha,
-      hora: this.asesoria.hora,
-      mensaje: this.asesoria.mensaje,
-      correo_destino: this.asesoria.correo 
-    })
-    .then(() => console.log("Correo enviado al usuario"))
-    .catch(err => console.error("Error usuario:", err));
-
-    // limpia formulario y muestra mensaje de éxito
-    this.asesoria = { nombre: '', correo: '', fecha: '', hora: '', mensaje: '' };
-    this.mostrarModal = false;
-    this.mensajeConfirmacion = "¡Tu solicitud fue enviada correctamente!";
     this.mostrarConfirmacion = true;
-
-  }*/
-
-  /*async verPortafolio(p: any) {
-    this.programadorSeleccionado = p;
-    this.mostrarPortafolio = true;
-
-    // obtiene proyectos del programador desde firestore
-    const proyectosRef = collection(this.firestore, 'proyectos');
-    const q = query(proyectosRef, where('uid', '==', p.uid));
-
-    collectionData(q, { idField: 'id' }).subscribe((proys: any[]) => {
-      console.log("Proyectos del programador:", proys);
-      this.proyectos = proys;
-    });
+    this.mensajeConfirmacion = '¡Tu solicitud fue enviada correctamente!';
   }
+});
 
-  cerrarPortafolio() {
-    this.mostrarPortafolio = false;
-    this.proyectos = [];
-  }*/
+}
 
   generarHorasDisponibles() {
     this.horasDisponibles = [];
@@ -457,4 +375,47 @@ agendarAsesoria() {
   volverHome() {
     window.location.href = '/';
   }
+
+  programarNotificacionAntes(asesoria: any, minutosAntes: number) {
+
+  const fechaHoraAsesoria = new Date(
+    `${asesoria.fecha}T${asesoria.hora}`
+  );
+
+  const ahora = new Date();
+
+  const tiempoAntes =
+    fechaHoraAsesoria.getTime() -
+    ahora.getTime() -
+    minutosAntes * 60 * 1000;
+
+  console.log('⏱ Notificación en (ms):', tiempoAntes);
+
+  if (tiempoAntes <= 0) {
+    console.warn('⚠ No se puede programar la notificación');
+    return;
+  }
+
+  setTimeout(() => {
+
+    this.mostrarConfirmacion = true;
+    this.mensajeConfirmacion =
+      `⏰ Recordatorio: tu asesoría inicia en ${minutosAntes} minutos`;
+
+    if (asesoria.telefono) {
+      const mensaje = encodeURIComponent(
+        `⏰ Recordatorio: tu asesoría inicia en ${minutosAntes} minutos`
+      );
+
+      const telefono = asesoria.telefono.replace(/\D/g, '');
+
+      window.open(
+        `https://wa.me/593${telefono}?text=${mensaje}`,
+        '_blank'
+      );
+    }
+
+  }, tiempoAntes);
+}
+
 }

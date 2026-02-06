@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { query, where, collection, getDocs } from 'firebase/firestore';
-
+import { HttpClient } from '@angular/common/http';
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import {
   getAuth,
@@ -21,6 +21,8 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { UserService } from '../../core/services/user.service';
+import { Router } from '@angular/router';
+
 
 
 // tipos de rol permitidos
@@ -56,7 +58,9 @@ export class AuthService {
   public authReady: Promise<void>;
   private resolveAuthReady!: () => void;
 
-  constructor(private userService: UserService) {
+  constructor(private userService: UserService,
+    private http: HttpClient, private router: Router
+  ) {
 
     this.app = initializeApp(environment.firebase);
     this.auth = getAuth(this.app);
@@ -200,10 +204,37 @@ export class AuthService {
       );
 
       this.currentUserData = {
-      ...data,
-      backendId: backendData?.id,
-      role: this.mapBackendRole(backendData?.rol)
-    };
+  ...data,
+  backendId: backendData?.id,
+  role: this.mapBackendRole(backendData?.rol)
+};
+
+// 🔥 REDIRECCIÓN SEGÚN ROL
+setTimeout(() => {
+  if (this.currentUserData?.role === 'admin') {
+    this.router.navigate(['/admin/dashboard']);
+  }
+  
+  if (this.currentUserData?.role === 'programador') {
+    this.router.navigate(['/programador']);
+  }
+}, 0);
+
+    // 🔐 PEDIR TOKEN JWT AL BACKEND
+this.http.post<any>(
+  'http://localhost:8080/gproyecto/api/auth/login',
+  { email: normalizedEmail }
+).subscribe(res => {
+  const currentToken = localStorage.getItem('token');
+
+if (!currentToken) {
+  localStorage.setItem('token', res.token);
+  console.log('Token guardado');
+}
+
+  console.log('Token guardado');
+});
+
 
 
       this.emitUserDataChange();

@@ -11,32 +11,21 @@ import { DashboardComponent } from './modules/admin/pages/dashboard/dashboard';
 // programador
 import { Portafolio } from './modules/programador/pages/portafolio/portafolio';
 
+import { adminGuard } from './core/guards/admin-guard';
+import { programadorGuard } from './core/guards/programador-guard';
+
 export const routes: Routes = [
 
   // ===== RUTAS PÚBLICAS =====
-  {
-    path: '',
-    component: HomeComponent
-  },
-  {
-    path: 'explorar',
-    component: ExplorarComponent
-  },
-  {
-    path: 'agendar-asesoria/:id',
-    component: AgendarAsesoriaComponent
-  },
+  { path: '', component: HomeComponent },
+  { path: 'explorar', component: ExplorarComponent },
+  { path: 'agendar-asesoria/:id', component: AgendarAsesoriaComponent },
 
   // ===== ADMIN =====
-  {
+ {
     path: 'admin',
-    component: DashboardComponent, // ⬅️ CONTENEDOR
+    canActivate: [adminGuard],
     children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'dashboard'
-      },
       {
         path: 'dashboard',
         component: DashboardComponent
@@ -47,12 +36,10 @@ export const routes: Routes = [
   // ===== PROGRAMADOR =====
   {
     path: 'programador',
-    component: Portafolio
+    component: Portafolio,
+    canActivate: [programadorGuard]
   },
 
   // ===== FALLBACK =====
-  {
-    path: '**',
-    redirectTo: ''
-  }
+  { path: '**', redirectTo: '' }
 ];

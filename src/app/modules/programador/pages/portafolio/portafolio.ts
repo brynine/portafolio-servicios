@@ -75,6 +75,9 @@ disponibilidad = {
   notificaciones: any[] = [];
   asesoriasFinales: any[] = [];
   mapaNotificaciones = new Map<string, Notification>();
+  disponibilidadEditando: any = null;
+  modoEditarDisponibilidad: boolean = false;
+
   
   constructor(
     private auth: AuthService,
@@ -165,10 +168,16 @@ ngOnInit() {
     );
   }
 
-  editarProyecto(p: any) {
-    this.proyectoEditando = { ...p };
-    this.vista = 'editar-proyecto';
+editarProyecto(p: any) {
+  if (!p?.id) {
+    this.mostrarMensaje('❌ Proyecto inválido');
+    return;
   }
+
+  this.proyectoEditando = { ...p };
+  this.vista = 'editar-proyecto';
+}
+
 
   cancelarEdicion() {
     this.proyectoEditando = null;
@@ -176,13 +185,28 @@ ngOnInit() {
   }
 
 actualizarProyecto() {
+  if (!this.proyectoEditando?.id) {
+    this.mostrarMensaje('❌ Proyecto inválido');
+    return;
+  }
+
+  if (!this.proyectoEditando.nombre.trim()) {
+    this.mostrarMensaje('❌ El nombre no puede estar vacío');
+    return;
+  }
+
+  if (!this.proyectoEditando.descripcion.trim()) {
+    this.mostrarMensaje('❌ La descripción no puede estar vacía');
+    return;
+  }
 
   const proyectoActualizado = {
     ...this.proyectoEditando,
-    tipo: this.proyectoEditando.tipo.toUpperCase(),
+    tipo: this.proyectoEditando.tipo.toUpperCase()
   };
 
-  this.projectService.update(this.proyectoEditando.id, proyectoActualizado)
+  this.projectService
+    .update(this.proyectoEditando.id, proyectoActualizado)
     .subscribe({
       next: () => {
         this.mostrarMensaje('✔ Proyecto actualizado');
@@ -191,30 +215,27 @@ actualizarProyecto() {
         this.cargarProyectosDesdeBackend();
       },
       error: (err) => {
-        console.error(err);
-        this.mostrarMensaje('❌ Error al actualizar el proyecto');
+        this.manejarError(err, '❌ Error al actualizar el proyecto');
       }
     });
 }
 
 confirmarEliminarProyecto(id: string) {
-  this.preguntar('⚠ ¿Eliminar este proyecto?', () => {
+  if (!id) {
+    this.mostrarMensaje('❌ Proyecto inválido');
+    return;
+  }
 
+  this.preguntar('⚠ ¿Eliminar este proyecto?', () => {
     this.projectService.delete(id).subscribe({
       next: () => {
         this.mostrarMensaje('🗑 Proyecto eliminado');
         this.cargarProyectosDesdeBackend();
       },
       error: (err) => {
-
-        if (err.status === 409) {
-          this.mostrarMensaje(err.error);
-        } else {
-          this.mostrarMensaje('❌ Error al eliminar el proyecto');
-        }
+        this.manejarError(err, '❌ No se pudo eliminar el proyecto');
       }
     });
-
   });
 }
 
@@ -223,53 +244,42 @@ confirmarEliminarProyecto(id: string) {
      ===================================================== */
 
 cargarAsesorias() {
-
   if (!this.userBackendId) {
     console.warn('No hay backendId para cargar asesorías');
     return;
   }
 
-  // Asesorías del programador
   this.advisoryService.getByProgramador(this.userBackendId).subscribe({
     next: (asesorias) => {
-
-      console.log('ASESORÍAS BACKEND:', asesorias);
       this.asesorias = asesorias;
 
-      // Notificaciones del mismo usuario
       this.notificationService.getByUser(this.userBackendId).subscribe({
         next: (nots) => {
+          this.mapaNotificaciones.clear();
 
-          console.log('NOTIFICACIONES:', nots);
-          this.notificaciones = nots;
+          nots.forEach(n => {
+            if (n.advisoryId) {
+              this.mapaNotificaciones.set(n.advisoryId, n);
+            }
+          });
 
-this.mapaNotificaciones.clear();
-nots.forEach(n => {
-  if (n.advisoryId) {
-    this.mapaNotificaciones.set(n.advisoryId, n);
-  }
-});
-
-this.asesoriasFinales = asesorias.map(a => {
-  const notif = this.mapaNotificaciones.get(a.id);
-
-  return {
-    ...a,
-    leido: notif ? notif.leido : false,
-    notificationId: notif?.id || null
-  };
-});
-
-console.log('ASESORÍAS FINALES:', this.asesoriasFinales);
-
+          this.asesoriasFinales = asesorias.map(a => {
+            const notif = this.mapaNotificaciones.get(a.id);
+            return {
+              ...a,
+              leido: notif ? notif.leido : false,
+              notificationId: notif?.id || null
+            };
+          });
         }
       });
     },
     error: (err) => {
-      console.error('Error cargando asesorías', err);
+      this.manejarError(err, '❌ Error al cargar asesorías');
     }
   });
 }
+
 
 responder(asesoria: any, estado: 'CONFIRMADA' | 'RECHAZADA') {
 
@@ -489,19 +499,32 @@ guardarProyecto() {
     return;
   }
 
+  if (!this.nuevoProyecto.nombre.trim()) {
+    this.mostrarMensaje('❌ El nombre del proyecto es obligatorio');
+    return;
+  }
+
+  if (!this.nuevoProyecto.descripcion.trim()) {
+    this.mostrarMensaje('❌ La descripción es obligatoria');
+    return;
+  }
+
+  if (!this.nuevoProyecto.participacion) {
+    this.mostrarMensaje('❌ Debe seleccionar su rol en el proyecto');
+    return;
+  }
+
   const proyecto = {
-    nombre: this.nuevoProyecto.nombre,
-    descripcion: this.nuevoProyecto.descripcion,
+    nombre: this.nuevoProyecto.nombre.trim(),
+    descripcion: this.nuevoProyecto.descripcion.trim(),
     tipo: this.nuevoProyecto.tipo.toUpperCase(),
     participacion: this.nuevoProyecto.participacion,
     tecnologias: this.nuevoProyecto.tecnologias
-      ? this.nuevoProyecto.tecnologias.split(',').map(t => t.trim())
+      ? this.nuevoProyecto.tecnologias.split(',').map(t => t.trim()).filter(t => t)
       : [],
     repositorio: this.nuevoProyecto.repositorio || 'N/T',
     deploy: this.nuevoProyecto.deploy || 'N/T',
-    user: {
-      id: userId
-    }
+    user: { id: userId }
   };
 
   this.projectService.create(proyecto as any).subscribe({
@@ -520,8 +543,7 @@ guardarProyecto() {
       this.cargarProyectosDesdeBackend();
     },
     error: (err) => {
-      console.error(err);
-      this.mostrarMensaje('❌ Error al guardar el proyecto');
+      this.manejarError(err, '❌ Error al guardar el proyecto');
     }
   });
 }
@@ -569,26 +591,175 @@ cargarDisponibilidades() {
 }
 
 guardarDisponibilidad() {
+  if (!this.userBackendId) {
+    this.mostrarMensaje('❌ Usuario inválido');
+    return;
+  }
+
+  if (!this.disponibilidad.dia) {
+    this.mostrarMensaje('❌ Seleccione un día');
+    return;
+  }
+
+  if (!this.disponibilidad.horaInicio || !this.disponibilidad.horaFin) {
+    this.mostrarMensaje('❌ Ingrese hora inicio y fin');
+    return;
+  }
+
+  if (this.disponibilidad.horaInicio >= this.disponibilidad.horaFin) {
+    this.mostrarMensaje('❌ La hora inicio debe ser menor a la hora fin');
+    return;
+  }
+
+  // 🔑 NORMALIZAR EL DÍA
+  const diaNormalizado = this.disponibilidad.dia.toUpperCase();
+
+  // 🔑 VALIDACIÓN DE SOLAPAMIENTO CON NORMALIZACIÓN
+  const conflicto = this.disponibilidades.some(d =>
+    d.dia.toUpperCase() === diaNormalizado &&
+    this.disponibilidad.horaInicio < d.horaFin &&
+    this.disponibilidad.horaFin > d.horaInicio
+  );
+
+  if (conflicto) {
+    this.mostrarMensaje('❌ La disponibilidad se cruza con otra existente');
+    return;
+  }
+
   const payload = {
-    ...this.disponibilidad,
+    dia: diaNormalizado, // 🔑 GUARDAR NORMALIZADO
+    horaInicio: this.disponibilidad.horaInicio,
+    horaFin: this.disponibilidad.horaFin,
     user: { id: this.userBackendId }
   };
 
-  this.availabilityService.create(payload as any)
-    .subscribe(() => {
+  this.availabilityService.create(payload as any).subscribe({
+    next: () => {
       this.mostrarMensaje('✔ Disponibilidad guardada');
-      this.disponibilidad = {
-        dia: '',
-        horaInicio: '',
-        horaFin: ''
-      };
+      this.disponibilidad = { dia: '', horaInicio: '', horaFin: '' };
       this.cargarDisponibilidades();
-    });
+    },
+    error: (err) => {
+      this.manejarError(err, '❌ Error al guardar disponibilidad');
+    }
+  });
 }
 
 eliminarDisponibilidad(id: string) {
   this.availabilityService.delete(id)
     .subscribe(() => this.cargarDisponibilidades());
+}
+
+private manejarError(err: any, mensajePorDefecto: string) {
+  if (!environment.production) {
+    console.group('❌ Error');
+    console.error(err);
+    console.groupEnd();
+  }
+
+  if (err?.status === 409 && typeof err.error === 'string') {
+    this.mostrarMensaje(err.error);
+    return;
+  }
+
+  if (err?.error?.message) {
+    this.mostrarMensaje(err.error.message);
+    return;
+  }
+
+  this.mostrarMensaje(mensajePorDefecto);
+}
+
+editarDisponibilidad(d: any) {
+  if (!d?.id) {
+    this.mostrarMensaje('❌ Disponibilidad inválida');
+    return;
+  }
+
+  this.disponibilidadEditando = { ...d };
+  this.modoEditarDisponibilidad = true;
+
+  this.disponibilidad = {
+    dia: d.dia,
+    horaInicio: d.horaInicio,
+    horaFin: d.horaFin
+  };
+}
+
+actualizarDisponibilidad() {
+  if (!this.disponibilidadEditando?.id) {
+    this.mostrarMensaje('❌ Disponibilidad inválida');
+    return;
+  }
+
+  if (!this.disponibilidad.dia) {
+    this.mostrarMensaje('❌ Seleccione un día');
+    return;
+  }
+
+  if (!this.disponibilidad.horaInicio || !this.disponibilidad.horaFin) {
+    this.mostrarMensaje('❌ Ingrese hora inicio y fin');
+    return;
+  }
+
+  if (this.disponibilidad.horaInicio >= this.disponibilidad.horaFin) {
+    this.mostrarMensaje('❌ La hora inicio debe ser menor a la hora fin');
+    return;
+  }
+
+  const diaNormalizado = this.disponibilidad.dia.toUpperCase();
+
+  // Validar solapamiento excluyendo el actual
+  const conflicto = this.disponibilidades.some(d =>
+    d.id !== this.disponibilidadEditando.id &&
+    d.dia.toUpperCase() === diaNormalizado &&
+    this.disponibilidad.horaInicio < d.horaFin &&
+    this.disponibilidad.horaFin > d.horaInicio
+  );
+
+  if (conflicto) {
+    this.mostrarMensaje('❌ El horario se cruza con otro existente');
+    return;
+  }
+
+  const payload = {
+    id: this.disponibilidadEditando.id,
+    dia: diaNormalizado,
+    horaInicio: this.disponibilidad.horaInicio,
+    horaFin: this.disponibilidad.horaFin,
+    user: { id: this.userBackendId }
+  };
+
+  this.availabilityService.update(payload.id, payload).subscribe({
+    next: () => {
+      this.mostrarMensaje('✔ Disponibilidad actualizada');
+
+      this.modoEditarDisponibilidad = false;
+      this.disponibilidadEditando = null;
+
+      this.disponibilidad = {
+        dia: '',
+        horaInicio: '',
+        horaFin: ''
+      };
+
+      this.cargarDisponibilidades();
+    },
+    error: (err) => {
+      this.manejarError(err, '❌ Error al actualizar disponibilidad');
+    }
+  });
+}
+
+cancelarEdicionDisponibilidad() {
+  this.modoEditarDisponibilidad = false;
+  this.disponibilidadEditando = null;
+
+  this.disponibilidad = {
+    dia: '',
+    horaInicio: '',
+    horaFin: ''
+  };
 }
 
 }

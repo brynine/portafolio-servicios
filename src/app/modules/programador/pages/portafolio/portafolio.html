@@ -139,7 +139,7 @@
         <input type="text" [(ngModel)]="proyectoEditando.deploy" name="editDeploy" />
 
         <button type="submit" class="btn-guardar">Guardar cambios</button>
-        <button type="button" class="btn-secundario" (click)="vista = 'proyectos'">Cancelar</button>
+        <button type="button" class="btn-cancelar" (click)="cancelarEdicion()">CANCELAR</button>
       </form>
     </div>
 
@@ -225,7 +225,26 @@
         <label>Hora fin</label>
         <input type="time" [(ngModel)]="disponibilidad.horaFin" name="horaFin" required />
 
-        <button type="submit" class="btn-guardar">Guardar disponibilidad</button>
+        <button *ngIf="!modoEditarDisponibilidad" type="submit" class="btn-guardar">
+          Guardar disponibilidad
+        </button>
+        <button
+          *ngIf="modoEditarDisponibilidad"
+          type="button"
+          class="btn-guardar"
+          (click)="actualizarDisponibilidad()"
+        >
+          ACTUALIZAR DISPONIBILIDAD
+        </button>
+
+        <button
+          *ngIf="modoEditarDisponibilidad"
+          type="button"
+          class="btn-cancelar"
+          (click)="cancelarEdicionDisponibilidad()"
+        >
+          CANCELAR
+        </button>
       </form>
 
       <hr />
@@ -236,8 +255,11 @@
         <p>
           <strong>{{ d.dia }}</strong> | {{ d.horaInicio }} - {{ d.horaFin }}
         </p>
+        <div class="acciones">
+          <button class="btn-editar" (click)="editarDisponibilidad(d)">EDITAR</button>
 
-        <button class="eliminar-btn" (click)="eliminarDisponibilidad(d.id)">🗑 Eliminar</button>
+          <button class="btn-eliminar" (click)="eliminarDisponibilidad(d.id)">ELIMINAR</button>
+        </div>
       </div>
     </div>
 

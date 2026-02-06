@@ -70,20 +70,49 @@ statsProgramador: any[] = [];
   this.cargarProgramador();
 }
 
+//Metodo para crear un programador
 crearProgramador() {
+  // Regla de negocio: campos obligatorios
+  if (!this.nuevoProgramador.name.trim()) {
+    this.mostrarMensaje('❌ El nombre es obligatorio');
+    return;
+  }
+
+  if (!this.nuevoProgramador.email.trim()) {
+    this.mostrarMensaje('❌ El correo es obligatorio');
+    return;
+  }
+
+  if (!this.nuevoProgramador.specialty.trim()) {
+    this.mostrarMensaje('❌ La especialidad es obligatoria');
+    return;
+  }
+
+  // Regla de negocio: email válido (básico)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(this.nuevoProgramador.email)) {
+    this.mostrarMensaje('❌ El correo no tiene un formato válido');
+    return;
+  }
+
   this.userService.crearProgramador({
-    email: this.nuevoProgramador.email,
     nombre: this.nuevoProgramador.name,
+    email: this.nuevoProgramador.email,
     especialidad: this.nuevoProgramador.specialty
   }).subscribe({
     next: () => {
-      this.mostrarMensaje('Programador creado correctamente');
+      this.mostrarMensaje('✔ Programador creado correctamente');
       this.nuevoProgramador = { name: '', email: '', specialty: '' };
       this.cargarProgramadores();
+    },
+    error: (err) => {
+      this.manejarError(err, '❌ No se pudo crear el programador');
     }
   });
 }
 
+
+//Metodo para cargar los programadores
 cargarProgramadores() {
   this.userService.getProgramadores().subscribe({
     next: (data) => {
@@ -96,10 +125,10 @@ cargarProgramadores() {
   });
 }
 
-  editarProgramador(p: any) {
+editarProgramador(p: any) {
     this.programadorEditando = { ...p };
     this.vista = 'editar';
-  }
+}
 
   actualizarProgramador() {
   const data = {
@@ -128,34 +157,61 @@ cargarProgramadores() {
   }
 
 eliminarProgramadorConfirmado(id: string) {
+  // Regla de negocio: ID válido
+  if (!id) {
+    this.mostrarMensaje('❌ Programador inválido');
+    return;
+  }
+
   this.userService.delete(id).subscribe({
     next: () => {
       this.mostrarMensaje('🗑 Programador eliminado');
       this.cargarProgramadores();
     },
     error: (err) => {
-      console.error(err);
-
-      const mensaje =
-        err?.error && typeof err.error === 'string'
-          ? err.error
-          : '❌ No se pudo eliminar el programador';
-
-      this.mostrarMensaje(mensaje);
+      // Regla de negocio: no se puede eliminar si tiene dependencias
+      this.manejarError(
+        err,
+        '❌ No se puede eliminar el programador'
+      );
     }
   });
 }
 
-    guardarHorario() {
-    if (!this.programadorSeleccionado) return;
 
-    if (!this.nuevoHorario.horaInicio || !this.nuevoHorario.horaFin) {
-    this.mostrarMensaje('Debe seleccionar hora inicio y hora fin.');
+//Metodo para guardar los horarios del programador
+guardarHorario() {
+  if (!this.programadorSeleccionado) {
+    this.mostrarMensaje('❌ Debe seleccionar un programador');
     return;
-    }
+  }
 
-    if (this.nuevoHorario.horaInicio >= this.nuevoHorario.horaFin) {
-    this.mostrarMensaje('La hora de inicio debe ser menor que la hora de fin.');
+  if (!this.nuevoHorario.dia) {
+    this.mostrarMensaje('❌ Debe seleccionar un día');
+    return;
+  }
+
+  if (!this.nuevoHorario.horaInicio || !this.nuevoHorario.horaFin) {
+    this.mostrarMensaje('❌ Debe ingresar hora inicio y fin');
+    return;
+  }
+
+  if (this.nuevoHorario.horaInicio >= this.nuevoHorario.horaFin) {
+    this.mostrarMensaje('❌ La hora inicio debe ser menor a la hora fin');
+    return;
+  }
+
+  // Regla de negocio: evitar horarios duplicados o solapados
+  const conflicto = this.horariosProgramador.some(h =>
+    h.dia === this.nuevoHorario.dia &&
+    (
+      this.nuevoHorario.horaInicio < h.horaFin &&
+      this.nuevoHorario.horaFin > h.horaInicio
+    )
+  );
+
+  if (conflicto) {
+    this.mostrarMensaje('❌ El horario se cruza con otro ya registrado');
     return;
   }
 
@@ -173,13 +229,13 @@ eliminarProgramadorConfirmado(id: string) {
       this.nuevoHorario = { dia: '', horaInicio: '', horaFin: '' };
       this.cargarHorariosProgramador();
     },
-    error: () => {
-      this.mostrarMensaje('❌ Error al crear horario');
+    error: (err) => {
+      this.manejarError(err, '❌ Error al crear el horario');
     }
   });
 }
 
-  cargarHorariosProgramador() {
+cargarHorariosProgramador() {
   if (!this.programadorSeleccionado) return;
 
   this.availabilityService
@@ -202,7 +258,22 @@ actualizarHorario() {
   }
 
   if (this.horarioEditando.horaInicio >= this.horarioEditando.horaFin) {
-    this.mostrarMensaje('La hora de inicio debe ser menor que la hora fin.');
+    this.mostrarMensaje('❌ La hora inicio debe ser menor a la hora fin');
+    return;
+  }
+
+  // Regla de negocio: evitar solapamiento
+  const conflicto = this.horariosProgramador.some(h =>
+    h.id !== this.horarioEditando.id &&
+    h.dia === this.horarioEditando.dia &&
+    (
+      this.horarioEditando.horaInicio < h.horaFin &&
+      this.horarioEditando.horaFin > h.horaInicio
+    )
+  );
+
+  if (conflicto) {
+    this.mostrarMensaje('❌ El horario se cruza con otro existente');
     return;
   }
 
@@ -215,21 +286,27 @@ actualizarHorario() {
         this.horarioEditando = null;
         this.cargarHorariosProgramador();
       },
-      error: () => {
-        this.mostrarMensaje('❌ Error al actualizar horario');
+      error: (err) => {
+        this.manejarError(err, '❌ Error al actualizar horario');
       }
     });
 }
 
-  editarHorario(horario: any) {
-    this.modoEditarHorario = true;
-    this.horarioEditando = { ...horario };
+
+editarHorario(horario: any) {
+  if (!horario?.id) {
+    this.mostrarMensaje('❌ Horario inválido');
+    return;
   }
 
-  cancelarEdicionHorario() {
-    this.modoEditarHorario = false;
-    this.horarioEditando = null;
-  }
+  this.modoEditarHorario = true;
+  this.horarioEditando = { ...horario };
+}
+
+cancelarEdicionHorario() {
+  this.modoEditarHorario = false;
+  this.horarioEditando = null;
+}
 
   eliminarHorarioConfirmado(id: string) {
   this.availabilityService.delete(id).subscribe({
@@ -243,7 +320,21 @@ actualizarHorario() {
   });
 }
 
-  cambiarProgramador() {
+obtenerHorarioActual() {
+  return this.modoEditarHorario
+    ? this.horarioEditando
+    : this.nuevoHorario;
+}
+
+actualizarHorarioActual(campo: 'dia' | 'horaInicio' | 'horaFin', valor: any) {
+  if (this.modoEditarHorario && this.horarioEditando) {
+    (this.horarioEditando as any)[campo] = valor;
+  } else {
+    (this.nuevoHorario as any)[campo] = valor;
+  }
+}
+
+cambiarProgramador() {
   if (this.programadorSeleccionado) {
     this.cargarHorariosProgramador();
   } else {
@@ -501,6 +592,26 @@ exportarProyectosPDF() {
       this.mostrarMensaje('❌ Error al generar el reporte de proyectos');
     }
   });
+}
+
+private manejarError(err: any, mensajePorDefecto: string) {
+  if (!environment.production) {
+    console.group('❌ Error HTTP');
+    console.error(err);
+    console.groupEnd();
+  }
+
+  if (err?.status === 409 && typeof err.error === 'string') {
+    this.mostrarMensaje(err.error);
+    return;
+  }
+
+  if (err?.error?.message) {
+    this.mostrarMensaje(err.error.message);
+    return;
+  }
+
+  this.mostrarMensaje(mensajePorDefecto);
 }
 
 }
